@@ -22,6 +22,12 @@
     #search_form_submit {
       margin: 10px 0;
     }
+    #tb_wrap {
+      width: 1200px;
+    }
+    #tb_list .glyphicon-headphones {
+      cursor: pointer;
+    }
   </style>
 </head>
 
@@ -43,8 +49,8 @@
       </div>
       <button type="button" class="btn btn-primary" id="search_form_submit" onclick="onSubmitBtnClick()">开始搜索</button>
     </form>
-    <div>
-      <table class="table table-striped" id="tb_list">
+    <div id="tb_wrap">
+      <table class="table table-striped table-hover scrolltable" id="tb_list">
         <caption>搜索结果</caption>
         <thead>
           <tr>
@@ -56,22 +62,10 @@
         </thead>
         <tbody>
           <tr>
-            <td>Tanmay</td>
-            <td>Bangalore</td>
-            <td>560001</td>
-            <td>560001</td>
-          </tr>
-          <tr>
-            <td>Sachin</td>
-            <td>Mumbai</td>
-            <td>400003</td>
-            <td>560001</td>
-          </tr>
-          <tr>
-            <td>Uma</td>
-            <td>Pune</td>
-            <td>411027</td>
-            <td>560001</td>
+            <td>告白气球</td>
+            <td>周杰伦的床边故事</td>
+            <td>周杰伦</td>
+            <td><i class="glyphicon glyphicon-headphones" title="试听" data-id="7149583" onclick="onPlayClick('7149583')"></i></td>
           </tr>
         </tbody>
       </table>
@@ -94,14 +88,14 @@
       })
     }
   }
-  function appendRowToTable (obj) {
+  function appendRowToTable(obj) {
     var tbEl = $("#tb_list tbody")
     var html = `
       <tr>
         <td>%NAME%</td>
         <td>%ALBUM%</td>
         <td>%SINGER%</td>
-        <td>%HREF%</td>
+        <td>%HREF%<span class="glyphicon glyphicon-search"></span></td>
       </tr>
     `
     html = html.replace('%NAME%', obj.name)
@@ -109,6 +103,23 @@
       .replace('%SINGER%', obj.singer)
       .replace('%HREF%', obj.href)
     tbEl.append(html)
+  }
+  function onPlayClick (musicId, from) {
+    var from = 'kuwo'
+    if (musicId) {
+      var data = {
+        id: musicId,
+        from: from
+      }
+      $.ajax({
+        method: 'post',
+        url: '/download/' + musicId,
+        data: data,
+        success: function (data) {
+          debugger
+        }
+      })
+    }
   }
 </script>
 

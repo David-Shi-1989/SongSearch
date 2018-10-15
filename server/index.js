@@ -7,6 +7,7 @@ const app = express()
 var KuwoDriver = require('./plugins/kuwo')
 
 app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({ extended: true}))
 app.use(express.static(path.join(__dirname, 'static')))
 
 app.get('/static/*', function (req, res, next) {
@@ -43,6 +44,9 @@ app.get('/singer/:name', function (req, res) {
   KuwoDriver.searchSinger(singerName).then((body) => {
     res.send(body)
   })
+})
+app.post('/download/:id', function (req, res) {
+  KuwoDriver.downloadSong(req.body.id)
 })
 app.listen(3000, () => {
   console.log('App listening on port 3000')

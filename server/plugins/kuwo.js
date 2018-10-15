@@ -1,4 +1,6 @@
 const request = require('request')
+const fs = require('fs')
+// const buffer = require('buffer')
 var kuwoDriver = {
   // 从酷我搜索 歌手名
   searchSinger: function (singerName) {
@@ -118,6 +120,33 @@ var kuwoDriver = {
       throw new Error('Cannot match div.list html list in Kuwo HTML')
     }
     return songList
+  },
+  // 下载歌曲
+  downloadSong: function (id) {
+    var url0 = 'http://antiserver.kuwo.cn/anti.s?format=aac|mp3&rid=%ID%&type=convert_url&response=res'
+    var header = {
+      Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+      'Accept-Encoding': 'gzip, deflate',
+      'Accept-Language': 'zh-CN,zh;q=0.9',
+      'Connection': 'keep-alive',
+      'Host': 'antiserver.kuwo.cn',
+      'Upgrade-Insecure-Requests': 1,
+      'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36'
+    }
+    var data = {
+      format: 'aac|mp3',
+      rid: id,
+      type: 'convert_url',
+      response: 'res'
+    }
+    var url = url0.replace('%ID%', id)
+    request.get({url: url, headers: header, form: data, gzip: true}, function (err, response2) {
+      var path = './download/' + id + '.aac'
+      var buf = new Buffer(response2.body)
+      fs.writeFile(path, buf, function (err) {
+        debugger
+      })
+    })
   }
 }
 module.exports = kuwoDriver
