@@ -1,9 +1,10 @@
 const express = require('express')
 const path = require('path')
 const fs = require('fs')
-const request = require('request')
 const bodyParser = require('body-parser')
 const app = express()
+
+var KuwoDriver = require('./plugins/kuwo')
 
 app.use(bodyParser.json())
 app.use(express.static(path.join(__dirname, 'static')))
@@ -39,128 +40,10 @@ app.get(['/','/index.html'], (req, res) => {
 })
 app.get('/singer/:name', function (req, res) {
   let singerName = req.params.name
-  searchSingerFromKuwo(singerName).then((body) => {
+  KuwoDriver.searchSinger(singerName).then((body) => {
     res.send(body)
   })
 })
-// 从酷我搜索 歌手名
-function searchSingerFromKuwo (singerName) {
-  var url = 'http://sou.kuwo.cn/ws/NSearch?type=music&key=%SINGER_NAME%'
-  var headers = {
-    Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-    'Accept-Encoding': 'gzip, deflate',
-    'Accept-Language': 'zh-CN,zh;q=0.9',
-    'Cache-Control': 'max-age=0',
-    'Connection': 'keep-alive',
-    Host: 'sou.kuwo.cn',
-    'Upgrade-Insecure-Requests': 1,
-    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36'
-  }
-  var formData = {
-    type: 'music',
-    key: singerName
-  }
-  return new Promise(function (resolve, reject){
-    request.get({url: url.replace('%SINGER_NAME%', singerName), headers: headers, form: formData, gzip: true}, function (err, response2) {
-      if (err) {
-        reject(err)
-      } else {
-        var arr = handleHTMLFromKuwo(response2.body)
-        resolve(arr)
-      }
-    })
-  })
-}
-// 处理酷我的html
-function handleHTMLFromKuwo (html) {
-  function getSongNameAndHref (html) {
-    var name = '', href = ''
-    var reg = /<p\s+class="m_name">[\w\W]*?<\/p>/g
-    var nameMatchArr = html.match(reg)
-    if (nameMatchArr.length > 0) {
-      var nameHtml = nameMatchArr[0]
-      var songHrefMatchArr = nameHtml.match(/href="[^"]+/g)
-      var songNameMatchArr = nameHtml.match(/title="[^"]+/g)
-      if (songHrefMatchArr.length > 0) {
-        href = songHrefMatchArr[0].replace('href="', '')
-      } else {
-        throw new Error('Cannot match song\'s name in ' + songHrefMatchArr[0])
-      }
-      if (songNameMatchArr.length > 0) {
-        name = songNameMatchArr[0].replace('title="', '')
-      } else {
-        throw new Error('Cannot match song\'s name in ' + songHrefMatchArr[0])
-      }
-    } else {
-      throw new Error('Cannot match song\'s name in ' + html)
-    }
-    return {name, href}
-  }
-  function getSongAlbumName (html) {
-    var album = ''
-    var reg = /<p\s+class="a_name">[\w\W]*?<\/p>/g
-    var albumMatchArr = html.match(reg)
-    if (albumMatchArr.length > 0) {
-      var titleMatchArr = albumMatchArr[0].match(/title="[^"]+/g)
-      if (titleMatchArr && titleMatchArr.length > 0) {
-        album = titleMatchArr[0].replace('title="', '')
-      } else {
-        console.log('Cannot match song\'s album name in ' + albumMatchArr[0])
-      }
-    } else {
-      throw new Error('Cannot match song\'s album name in ' + html)
-    }
-    return album
-  }
-  function getSingerName (html) {
-    var name = ''
-    var reg = /<p\s+class="s_name">[\w\W]*?<\/p>/g
-    var matchArr = html.match(reg)
-    if (matchArr.length > 0) {
-      var singerArr = matchArr[0].match(/title="[^"]+/g)
-      if (singerArr.length > 0) {
-        name = singerArr.map(function (item) {
-          return item.replace('title="','')
-        }).join('&')
-      } else {
-        throw new Error('Cannot match song\'s singer name in ' + matchArr[0])
-      }
-    } else {
-      throw new Error('Cannot match song\'s singer name in ' + html)
-    }
-    return name
-  }
-  var songList = []
-  var reg = /<div\s+class="list">[\w\W]*?<\/div>/g
-  var containerHtmlMatchArr = html.match(reg)
-  if (containerHtmlMatchArr.length > 0) {
-    var containerHtml = containerHtmlMatchArr[0]
-    var reg2 = /<li\s+class="clearfix">[\w\W]*?<\/li>/g
-    var songsHtmlMatchArr = containerHtml.match(reg2)
-    if (songsHtmlMatchArr.length > 0) {
-      for (var i = 0; i < songsHtmlMatchArr.length; i++) {
-        var curHtml = songsHtmlMatchArr[i]
-        // 歌曲名
-        var songNameHref = getSongNameAndHref(curHtml)
-        // 专辑名
-        var albumName = getSongAlbumName(curHtml)
-        // 歌手名
-        var singerName = getSingerName(curHtml)
-        songList.push({
-          name: songNameHref.name,
-          singer: singerName,
-          album: albumName,
-          href: songNameHref.href
-        })
-      }
-    } else {
-      throw new Error('Cannot match li.clearfix html list in Kuwo HTML')
-    }
-  } else {
-    throw new Error('Cannot match div.list html list in Kuwo HTML')
-  }
-  return songList
-}
 app.listen(3000, () => {
   console.log('App listening on port 3000')
 })
