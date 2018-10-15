@@ -10,6 +10,7 @@
   <link rel="stylesheet" type="text/css" href="../static/style/main.css">
   <link rel="stylesheet" type="text/css" href="../static/bootstrap/dist/css/bootstrap.min.css">
   <script type="text/javascript" src="../static/jquery/dist/jquery.min.js"></script>
+  <script type="text/javascript" src="../static/script/common.js"></script>
   <script type="text/javascript" src="../static/bootstrap/dist/js/bootstrap.min.js"></script>
   <style>
     #search_form {
@@ -28,11 +29,30 @@
     #tb_list .glyphicon-headphones {
       cursor: pointer;
     }
+    div.alert {
+      position: absolute;
+      top: 20px;
+      width: 90%;
+      left: 5%;
+      display: none;
+    }
   </style>
 </head>
 
 <body>
   <div id="main">
+    <div class="alert alert-success alert-dismissable" id="alert_success">
+      <button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+        &times;
+      </button>
+      <span>成功！很好地完成了提交。</span>
+    </div>
+    <div class="alert alert-danger alert-dismissable"  id="alert_error">
+      <button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+        &times;
+      </button>
+      <span>错误！请进行一些更改。</span>
+    </div>
     <h2>Music Download 爬虫音乐</h2>
     <form id="search_form">
       <div class="input-group" id="search_form_name">
@@ -61,18 +81,36 @@
           </tr>
         </thead>
         <tbody>
-          <tr>
+          <!-- <tr>
             <td>告白气球</td>
             <td>周杰伦的床边故事</td>
             <td>周杰伦</td>
-            <td><i class="glyphicon glyphicon-headphones" title="试听" data-id="7149583" onclick="onPlayClick('7149583')"></i></td>
-          </tr>
+            <td><i class="glyphicon glyphicon-headphones" title="试听" data-id="7149583" data-name="告白气球" data-singer="周杰伦" data-from="kuwo" onclick="onDownloadClick()"></i></td>
+          </tr> -->
         </tbody>
       </table>
     </div>
   </div>
 </body>
 <script type="text/javascript">
+  function showSuccessAlert (msg) {
+    if (msg) {
+      $("#alert_success span").text(msg)
+      $("#alert_success").show()
+      setTimeout(function () {
+        $("#alert_success").hide()
+      }, 3000)
+    }
+  }
+  function showErrorAlert (msg) {
+    if (msg) {
+      $("#alert_error span").text(msg)
+      $("#alert_error").show()
+      setTimeout(function () {
+        $("#alert_error").hide()
+      }, 3000)
+    }
+  }
   function onSubmitBtnClick() {
     var name = document.getElementById('input_singer_name').value
     if (name) {
@@ -95,28 +133,34 @@
         <td>%NAME%</td>
         <td>%ALBUM%</td>
         <td>%SINGER%</td>
-        <td>%HREF%<span class="glyphicon glyphicon-search"></span></td>
+        <td><i class="glyphicon glyphicon-headphones" title="试听" data-id="%ID%" data-name="%NAME%" data-singer="%SINGER%" data-from="kuwo" onclick="onDownloadClick()"></i></td>
       </tr>
     `
-    html = html.replace('%NAME%', obj.name)
-      .replace('%ALBUM%', obj.album)
-      .replace('%SINGER%', obj.singer)
-      .replace('%HREF%', obj.href)
+    html = html.replaceAll('%NAME%', obj.name)
+      .replaceAll('%ALBUM%', obj.album)
+      .replaceAll('%SINGER%', obj.singer)
+      .replaceAll('%ID%', obj.id)
     tbEl.append(html)
   }
-  function onPlayClick (musicId, from) {
-    var from = 'kuwo'
-    if (musicId) {
-      var data = {
-        id: musicId,
-        from: from
-      }
+  function onDownloadClick (musicId, from) {
+    var $el = $(event.target)
+    var data = {
+      id: $el.data('id'),
+      name: $el.data('name'),
+      singer: $el.data('singer'),
+      from: $el.data('from')
+    }
+    if (data.id) {
       $.ajax({
         method: 'post',
         url: '/download/' + musicId,
         data: data,
-        success: function (data) {
-          debugger
+        success: function (isOK) {
+          if (isOK) {
+            showSuccessAlert('成功下载歌曲【' + data.name + '】')
+          } else {
+            showErrorAlert('失败下载歌曲【' + data.name + '】')
+          }
         }
       })
     }

@@ -1,5 +1,6 @@
 const request = require('request')
 const fs = require('fs')
+const http = require('http')
 // const buffer = require('buffer')
 var kuwoDriver = {
   // 从酷我搜索 歌手名
@@ -100,13 +101,19 @@ var kuwoDriver = {
       if (songsHtmlMatchArr.length > 0) {
         for (var i = 0; i < songsHtmlMatchArr.length; i++) {
           var curHtml = songsHtmlMatchArr[i]
-          // 歌曲名
+          // 歌曲名和ID】
+          var id = ''
           var songNameHref = getSongNameAndHref(curHtml)
+          var idMatchArr = songNameHref.href.match(/\d+/)
+          if (idMatchArr.length > 0) {
+            id = idMatchArr[0]
+          }
           // 专辑名
           var albumName = getSongAlbumName(curHtml)
           // 歌手名
           var singerName = getSingerName(curHtml)
           songList.push({
+            id: id,
             name: songNameHref.name,
             singer: singerName,
             album: albumName,
@@ -122,7 +129,7 @@ var kuwoDriver = {
     return songList
   },
   // 下载歌曲
-  downloadSong: function (id) {
+  downloadSong: function (id, fileName) {
     var url0 = 'http://antiserver.kuwo.cn/anti.s?format=aac|mp3&rid=%ID%&type=convert_url&response=res'
     var header = {
       Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
@@ -140,11 +147,26 @@ var kuwoDriver = {
       response: 'res'
     }
     var url = url0.replace('%ID%', id)
-    request.get({url: url, headers: header, form: data, gzip: true}, function (err, response2) {
-      var path = './download/' + id + '.aac'
-      var buf = new Buffer(response2.body)
-      fs.writeFile(path, buf, function (err) {
-        debugger
+    var path = './download/' + fileName + '.aac'
+    return new Promise(function(resolve, reject) {
+      http.get(url, function(res) {
+        var location = res.headers.location
+        http.get(location, function (res, err) {
+          var buffers = []
+          res.on('data', function(data) {
+            buffers.push(data)
+          })
+          res.on('end', function(){
+            var fileBuffer = Buffer.concat(buffers)
+            fs.writeFile(path, fileBuffer, function (err) {
+              if (err) {
+                reject(false)
+              } else {
+                resolve(true)
+              }
+            })
+          })
+        })
       })
     })
   }

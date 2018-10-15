@@ -46,7 +46,11 @@ app.get('/singer/:name', function (req, res) {
   })
 })
 app.post('/download/:id', function (req, res) {
-  KuwoDriver.downloadSong(req.body.id)
+  var data = req.body
+  var fileName = data.name + ' - ' + data.singer
+  KuwoDriver.downloadSong(data.id, fileName).then((isSuccess) => {
+    res.send(isSuccess)
+  })
 })
 app.listen(3000, () => {
   console.log('App listening on port 3000')
