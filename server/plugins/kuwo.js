@@ -91,6 +91,15 @@ var kuwoDriver = {
       }
       return name
     }
+    function getTotal (html) {
+      var total = 0
+      var reg = /相关歌曲<span>(\d+)<\/span>首/g
+      var matchResult = reg.exec(html)
+      if (matchResult[1]) {
+        total = parseInt(matchResult[1])
+      }
+      return total
+    }
     var songList = []
     var reg = /<div\s+class="list">[\w\W]*?<\/div>/g
     var containerHtmlMatchArr = html.match(reg)
@@ -117,7 +126,8 @@ var kuwoDriver = {
             name: songNameHref.name,
             singer: singerName,
             album: albumName,
-            href: songNameHref.href
+            href: songNameHref.href,
+            from: 'kuwo'
           })
         }
       } else {
@@ -126,7 +136,7 @@ var kuwoDriver = {
     } else {
       throw new Error('Cannot match div.list html list in Kuwo HTML')
     }
-    return songList
+    return {list: songList, total: getTotal(html), pageSize: 25}
   },
   // 下载歌曲
   downloadSong: function (id, fileName) {

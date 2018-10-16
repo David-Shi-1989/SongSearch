@@ -80,7 +80,8 @@ app.get('/singer/:name', function (req, res) {
 app.post('/download/:id', function (req, res) {
   var data = req.body
   var fileName = data.name + ' - ' + data.singer
-  KuwoDriver.downloadSong(data.id, fileName).then((isSuccess) => {
+  var id = req.params.id
+  KuwoDriver.downloadSong(id, fileName).then((isSuccess) => {
     res.send(isSuccess)
   })
 })
