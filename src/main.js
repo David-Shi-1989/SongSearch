@@ -8,10 +8,12 @@ import 'babel-polyfill'
 import iview from 'iview'
 import '../node_modules/iview/dist/styles/iview.css'
 import $ from 'jquery'
+import Axios from 'axios'
 
 Vue.use(iview)
 
 Vue.config.productionTip = false
+Vue.prototype.$axios = Axios
 
 /* eslint-disable no-new */
 new Vue({
