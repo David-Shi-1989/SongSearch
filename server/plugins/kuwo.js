@@ -3,10 +3,12 @@ const fs = require('fs')
 const http = require('http')
 // const buffer = require('buffer')
 var kuwoDriver = {
+  searchUrl: 'http://sou.kuwo.cn/ws/NSearch?type=music&key=%SINGER_NAME%&pn=%PAGE_CURRENT%',
+  downloadUrl: 'http://antiserver.kuwo.cn/anti.s?format=aac|mp3&rid=%ID%&type=convert_url&response=res',
   // 从酷我搜索 歌手名
-  searchSinger: function (singerName) {
+  searchSong: function (singerName, pageCurrent) {
     var me = this
-    var url = 'http://sou.kuwo.cn/ws/NSearch?type=music&key=%SINGER_NAME%'
+    var current = pageCurrent || 1
     var headers = {
       Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
       'Accept-Encoding': 'gzip, deflate',
@@ -21,8 +23,9 @@ var kuwoDriver = {
       type: 'music',
       key: singerName
     }
-    return new Promise(function (resolve, reject){
-      request.get({url: url.replace('%SINGER_NAME%', singerName), headers: headers, form: formData, gzip: true}, function (err, response2) {
+    var url = this.searchUrl.replace('%SINGER_NAME%', singerName).replace('%PAGE_CURRENT%', current)
+    return new Promise(function (resolve, reject) {
+      request.get({url: url, headers: headers, form: formData, gzip: true}, function (err, response2) {
         if (err) {
           reject(err)
         } else {
@@ -35,7 +38,8 @@ var kuwoDriver = {
   // 处理酷我的html
   handleHTML: function (html) {
     function getSongNameAndHref (html) {
-      var name = '', href = ''
+      var name = ''
+      var href = ''
       var reg = /<p\s+class="m_name">[\w\W]*?<\/p>/g
       var nameMatchArr = html.match(reg)
       if (nameMatchArr.length > 0) {
@@ -107,7 +111,7 @@ var kuwoDriver = {
       var containerHtml = containerHtmlMatchArr[0]
       var reg2 = /<li\s+class="clearfix">[\w\W]*?<\/li>/g
       var songsHtmlMatchArr = containerHtml.match(reg2)
-      if (songsHtmlMatchArr.length > 0) {
+      if (songsHtmlMatchArr && songsHtmlMatchArr.length > 0) {
         for (var i = 0; i < songsHtmlMatchArr.length; i++) {
           var curHtml = songsHtmlMatchArr[i]
           // 歌曲名和ID】
@@ -131,7 +135,7 @@ var kuwoDriver = {
           })
         }
       } else {
-        throw new Error('Cannot match li.clearfix html list in Kuwo HTML')
+        console.log('No data found in page.')
       }
     } else {
       throw new Error('Cannot match div.list html list in Kuwo HTML')
@@ -140,37 +144,21 @@ var kuwoDriver = {
   },
   // 下载歌曲
   downloadSong: function (id, fileName) {
-    var url0 = 'http://antiserver.kuwo.cn/anti.s?format=aac|mp3&rid=%ID%&type=convert_url&response=res'
-    var header = {
-      Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-      'Accept-Encoding': 'gzip, deflate',
-      'Accept-Language': 'zh-CN,zh;q=0.9',
-      'Connection': 'keep-alive',
-      'Host': 'antiserver.kuwo.cn',
-      'Upgrade-Insecure-Requests': 1,
-      'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36'
-    }
-    var data = {
-      format: 'aac|mp3',
-      rid: id,
-      type: 'convert_url',
-      response: 'res'
-    }
-    var url = url0.replace('%ID%', id)
+    var url = this.downloadUrl.replace('%ID%', id)
     var path = './download/' + fileName + '.aac'
-    return new Promise(function(resolve, reject) {
-      http.get(url, function(res) {
+    return new Promise(function (resolve, reject) {
+      http.get(url, function (res) {
         var location = res.headers.location
         http.get(location, function (res, err) {
           var buffers = []
-          res.on('data', function(data) {
+          res.on('data', function (data) {
             buffers.push(data)
           })
-          res.on('end', function(){
+          res.on('end', function () {
             var fileBuffer = Buffer.concat(buffers)
             fs.writeFile(path, fileBuffer, function (err) {
               if (err) {
-                reject(false)
+                reject(new Error('fail to save audio file.' + path))
               } else {
                 resolve(true)
               }

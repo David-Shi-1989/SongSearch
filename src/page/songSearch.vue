@@ -1,5 +1,5 @@
 <template>
-  <div class="sww-page-wrap">
+  <div class="sww-song-page-wrap">
     <div class="sww-form-wrap">
       <Input v-model="search.text">
         <Select v-model="search.from" slot="prepend" style="width: 80px">
@@ -9,17 +9,25 @@
         <Button slot="append" icon="ios-search" @click="onSearchBtnClick"></Button>
       </Input>
     </div>
-    <div>
+    <div class="sww-table-wrap">
       <Table
         :columns="table.columns"
         :data="table.data"
-        :height="600"
+        :height="500"
         stripe
         :loading="table.isLoading"
         size="small"
       ></Table>
       <div class="sww-page-wrap">
-        <Page :total="table.total" :page-size="table.pageSize" show-elevator show-total size="small" />
+        <Page
+          :total="pagingTool.total"
+          :page-size="pagingTool.pageSize"
+          :current="pagingTool.current"
+          show-elevator
+          show-total
+          size="small"
+          @on-change="onPageCurrentChange"
+          @on-page-size-change="onPageSizeChange"/>
       </div>
     </div>
   </div>
@@ -71,51 +79,100 @@ export default {
                 on: {
                   click: function (evt) {
                     var dataSet = evt.currentTarget.dataset
-                    me.$axios({
-                      method: 'POST',
-                      url: '/download/' + dataSet.id,
-                      data: {
-                        name: dataSet.name,
-                        singer: dataSet.singer
-                      }
-                    }).then((res) => {
-                      if (res.data) {
-                        me.$Message.success('下载成功!')
-                      } else {
-                        me.$Message.error('下载失败!')
-                      }
-                    })
+                    me.onDownloadBtnClick(dataSet.id, dataSet.name, dataSet.singer)
                   }
                 }
               })
-              var progressBar = h('Progress', {
-                props: {
-                  'stroke-width': 5,
-                  percent: 0
-                }
-              })
-              return h('div', {}, [iconBtn, progressBar])
+              // var progressBar = h('Progress', {
+              //   props: {
+              //     'stroke-width': 5,
+              //     percent: 0
+              //   }
+              // })
+              return h('div', {}, [iconBtn])
             }
           }
         ],
         data: [],
         total: 0,
         pageSize: 25
+      },
+      pagingTool: {
+        total: 0,
+        pageSize: 25,
+        current: 1
+      },
+      resetPageEnum: {
+        pageCurrentChange: 0
       }
     }
   },
   methods: {
+    initData () {
+      this.table.isLoading = true
+      this.$Loading.start()
+      this.$axios({
+        method: 'POST',
+        url: '/search/' + this.search.text,
+        data: {
+          pageIndex: this.pagingTool.current
+        }
+      }).then(res => {
+        this.table.isLoading = false
+        this.$Loading.finish()
+        this.table.data = res.data.list
+        this.pagingTool.total = res.data.total
+      })
+    },
     onSearchBtnClick () {
       if (this.search.text) {
-        this.table.isLoading = true
+        this.initData()
+      }
+    },
+    onDownloadBtnClick (id, name, singer) {
+      if (id && name && singer) {
+        this.$Loading.start()
         this.$axios({
-          methods: 'GET',
-          url: '/singer/' + this.search.text
-        }).then((res) => {
-          this.table.isLoading = false
-          this.table.data = res.data.list
-          this.table.total = res.data.total
+          method: 'POST',
+          url: '/download/' + id,
+          data: {
+            name: name,
+            singer: singer
+          }
+        }).then(res => {
+          if (res.data) {
+            this.$Loading.finish()
+            this.$Message.success('下载成功!')
+          } else {
+            this.$Loading.error()
+            this.$Message.error('下载失败!')
+          }
         })
+      }
+    },
+    // pagingTool
+    onPageCurrentChange (newCurrent) {
+      this.pagingTool.current = newCurrent
+      this.resetPage(this.resetPageEnum.pageCurrentChange)
+      this.initData()
+    },
+    onPageSizeChange (newPageSize) {
+      alert('onPageSizeChange')
+    },
+    resetPage (mode) {
+      var isScrollBack = true
+      switch (mode) {
+        case this.resetPageEnum.pageCurrentChange:
+          // do nothing
+          break
+        default:
+          break
+      }
+      if (isScrollBack) {
+        tableScroolTopBack()
+      }
+      function tableScroolTopBack () {
+        $('.sww-table-wrap .ivu-table-body.ivu-table-overflowY').scrollTop(0)
       }
     }
   }

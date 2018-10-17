@@ -71,9 +71,10 @@ app.get(['/bootstrap.html'], (req, res) => {
     }
   })
 })
-app.get('/singer/:name', function (req, res) {
+app.post('/search/:name', function (req, res) {
   let singerName = req.params.name
-  KuwoDriver.searchSinger(singerName).then((body) => {
+  let pageCurrent = req.body.pageIndex || 1
+  KuwoDriver.searchSong(singerName, pageCurrent).then((body) => {
     res.send(body)
   })
 })
