@@ -142,13 +142,26 @@ var kuwoDriver = {
     }
     return {list: songList, total: getTotal(html), pageSize: 25}
   },
-  // 下载歌曲
-  downloadSong: function (id, fileName) {
+  // 根据歌曲id获取实际下载地址
+  getSongUrl: function (id) {
     var url = this.downloadUrl.replace('%ID%', id)
-    var path = './download/' + fileName + '.aac'
     return new Promise(function (resolve, reject) {
       http.get(url, function (res) {
         var location = res.headers.location
+        if (location) {
+          resolve(location)
+        } else {
+          reject(new Error('Cannot get music location from kuwo with music id ' + id))
+        }
+      })
+    })
+  },
+  // 下载歌曲
+  downloadSong: function (id, fileName) {
+    var path = './static/download/' + fileName + '.aac'
+    var me = this
+    return new Promise(function (resolve, reject) {
+      me.getSongUrl(id).then((location) => {
         http.get(location, function (res, err) {
           var buffers = []
           res.on('data', function (data) {

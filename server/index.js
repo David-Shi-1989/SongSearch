@@ -14,6 +14,7 @@ const DIST_DIR = path.join(__dirname, '../', 'dist')
 var KuwoDriver = require('./plugins/kuwo')
 
 app.use(express.static(path.join(__dirname, 'static')))
+app.use(express.static(path.join(__dirname, 'download')))
 
 app.get('*', function (req, res, next) {
   res.header('Access-Control-Allow-Origin', '*')
@@ -77,6 +78,12 @@ app.post('/download/:id', function (req, res) {
   var id = req.params.id
   KuwoDriver.downloadSong(id, fileName).then((isSuccess) => {
     res.send(isSuccess)
+  })
+})
+app.post('/getSongSrc/:id', function (req, res) {
+  var id = req.params.id
+  KuwoDriver.getSongUrl(id).then((src) => {
+    res.send(src)
   })
 })
 app.listen(3000, () => {

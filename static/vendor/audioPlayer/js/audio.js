@@ -329,7 +329,6 @@
 				operation = setTimeout(function () {
 
 					if (action) {
-
 						control.play();
 						audioBtn.play.className = audioBtn.play.getAttribute('data-off');
 					} else {

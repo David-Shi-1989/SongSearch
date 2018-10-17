@@ -31,7 +31,7 @@
       </div>
     </div>
     <div>
-      <audioPlayer></audioPlayer>
+      <audioPlayer ref="audioPlayer"></audioPlayer>
     </div>
   </div>
 </template>
@@ -66,12 +66,9 @@ export default {
             title: '操作',
             render: (h, params) => {
               var me = this
-              var iconBtn = h('Icon', {
-                props: {
-                  type: 'md-download',
-                  size: '16'
-                },
+              var downloadIconBtn = h('i', {
                 attrs: {
+                  class: 'fa fa-download',
                   title: '下载',
                   'data-id': params.row.id,
                   'data-from': params.row.from,
@@ -79,7 +76,9 @@ export default {
                   'data-singer': params.row.singer
                 },
                 style: {
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  marginRight: '15px'
                 },
                 on: {
                   click: function (evt) {
@@ -88,13 +87,27 @@ export default {
                   }
                 }
               })
-              // var progressBar = h('Progress', {
-              //   props: {
-              //     'stroke-width': 5,
-              //     percent: 0
-              //   }
-              // })
-              return h('div', {}, [iconBtn])
+              var playIconBtn = h('i', {
+                attrs: {
+                  class: 'fa fa-music',
+                  title: '播放',
+                  'data-id': params.row.id,
+                  'data-from': params.row.from,
+                  'data-name': params.row.name,
+                  'data-singer': params.row.singer
+                },
+                style: {
+                  cursor: 'pointer',
+                  fontSize: '16px'
+                },
+                on: {
+                  click: function (evt) {
+                    var dataSet = evt.currentTarget.dataset
+                    me.onPlayBtnClick(dataSet.id, dataSet.name, dataSet.singer)
+                  }
+                }
+              })
+              return h('div', {}, [downloadIconBtn, playIconBtn])
             }
           }
         ],
@@ -153,6 +166,27 @@ export default {
           } else {
             this.$Loading.error()
             this.$Message.error('下载失败!')
+          }
+        })
+      }
+    },
+    onPlayBtnClick (id, name, singer) {
+      if (id) {
+        this.$Loading.start()
+        this.$axios({
+          method: 'POST',
+          url: '/getSongSrc/' + id,
+          data: {
+            name: name,
+            singer: singer
+          }
+        }).then(res => {
+          if (res.data) {
+            this.$Loading.finish()
+            this.$refs.audioPlayer.playThisSong(name + ' - ' + singer, res.data)
+          } else {
+            this.$Loading.error()
+            this.$Message.error('播放失败!')
           }
         })
       }

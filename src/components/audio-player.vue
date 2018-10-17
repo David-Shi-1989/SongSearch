@@ -18,10 +18,9 @@
         </div>
         <div class="audio-btn">
           <div class="audio-select">
-            <div action="prev" class="icon-fast-backward"></div>
-            <i class="fa fa-play"></i>
-            <div action="play" data-on="icon-play" data-off="icon-pause" class="icon-play"></div>
-            <div action="next" class="icon-fast-forward"></div>
+            <i class="fa fa-fast-backward" action="prev"></i>
+            <i class="fa fa-play" action="play" data-on="fa fa-play" data-off="fa fa-pause"></i>
+            <i class="fa fa-fast-forward" action="next"></i>
             <!--<div action="menu" class="icon-list-alt"></div>-->
             <div action="volume" class="icon-volume-up">
               <div class="audio-set-volume">
@@ -40,20 +39,36 @@
 <script>
 export default {
   data () {
-    return {}
+    return {
+      songList: [],
+      audioFn: null
+    }
   },
   mounted () {
-    var setConfig = {
-      song: [
-        {title: '稻香', src: 'http://localhost:3000/static/daoxiang.aac'}
-      ],
-      error: function (msg) {
-        alert(msg)
+    this.init()
+    this.play()
+  },
+  methods: {
+    init () {
+      var setConfig = {
+        song: this.songList,
+        error: function (msg) {
+          alert(msg)
+        }
       }
-    }
-    var audioFn = audioPlay(setConfig)
-    if (audioFn) {
-      audioFn.loadFile(1)
+      this.audioFn = audioPlay(setConfig)
+    },
+    play () {
+      if (this.audioFn) {
+        this.audioFn.loadFile(1)
+      }
+    },
+    playThisSong (title, src) {
+      if (title && src) {
+        this.songList = [{title, src}]
+      }
+      this.init()
+      this.play()
     }
   }
 }
@@ -69,22 +84,18 @@ export default {
   color: #fafafa;
 }
 .audio-container {
-  width: 1000px;
+  width: 1100px;
   margin: auto;
 }
 .audio-view {
   position: relative;
-  padding-left: 100px;
-  padding-right: 150px;
   height: 80px;
   overflow: hidden;
   transition: all 0.6s ease;
   -webkit-transition: all 0.6s ease;
 }
 .audio-cover {
-  position: absolute;
-  left: 0;
-  top: 0;
+  float: left;
   width: 80px;
   height: 80px;
   background-size: auto 100%;
@@ -98,6 +109,8 @@ export default {
   margin: auto;
 }
 .audio-body {
+  width: 770px;
+  float: left;
   padding: 0 10px;
 }
 .audio-title {
@@ -129,6 +142,8 @@ export default {
   text-align: right;
 }
 .audio-setbacks {
+  width: 650px;
+  margin: 0 10px;
   height: 6px;
   border-radius: 3px;
   background-color: #333;
@@ -170,7 +185,7 @@ export default {
 }
 .audio-btn {
   position: absolute;
-  width: 150px;
+  width: 200px;
   height: 100px;
   right: 0;
   top: 0;
@@ -178,35 +193,44 @@ export default {
 .audio-select {
   height: 20px;
   margin-top: 40px;
-  width: 120px;
+  /* width: 120px; */
   float: right;
   font-size: 14px;
   text-align: center;
   transition: all 0.6s ease;
   -webkit-transition: all 0.6s ease;
 }
+.audio-select > i {
+  display: block;
+  width: 15px;
+  height: 15px;
+  float: left;
+  margin-right: 10px;
+  cursor: pointer;
+}
 .audio-select > div {
   position: relative;
-  /* width: 20px; */
+  width: 125px;
   height: 20px;
   background-size: 100% 100%;
   background-position: center center;
   background-repeat: no-repeat;
   float: left;
   cursor: pointer;
+  margin-top: 5px;
 }
 .audio-select > div + div {
   margin-left: 10px;
 }
 .audio-set-volume {
   box-sizing: border-box;
-  position: absolute;
-  right: -120px;
-  bottom: 0;
+  /* position: absolute; */
+  /* right: -120px; */
+  /* bottom: 0; */
   width: 120px;
   height: 15px;
   padding-left: 15px;
-  z-index: 999;
+  /* z-index: 999; */
   transition: 0.6s width ease;
 }
 .volume-box {
