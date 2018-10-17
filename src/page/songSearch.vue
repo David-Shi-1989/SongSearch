@@ -30,12 +30,17 @@
           @on-page-size-change="onPageSizeChange"/>
       </div>
     </div>
+    <div>
+      <audioPlayer></audioPlayer>
+    </div>
   </div>
 </template>
 
 <script>
+import audioPlayer from '@/components/audio-player'
 export default {
   name: 'songSearch',
+  components: {audioPlayer},
   data () {
     return {
       search: {
@@ -103,7 +108,8 @@ export default {
         current: 1
       },
       resetPageEnum: {
-        pageCurrentChange: 0
+        pageCurrentChange: 0,
+        beginSearch: 1
       }
     }
   },
@@ -126,6 +132,7 @@ export default {
     },
     onSearchBtnClick () {
       if (this.search.text) {
+        this.resetPage(this.resetPageEnum.beginSearch)
         this.initData()
       }
     },
@@ -164,6 +171,9 @@ export default {
       switch (mode) {
         case this.resetPageEnum.pageCurrentChange:
           // do nothing
+          break
+        case this.resetPageEnum.beginSearch:
+          this.pagingTool.current = 1
           break
         default:
           break

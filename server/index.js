@@ -24,20 +24,13 @@ app.get('*', function (req, res, next) {
     headerContentType = 'application/javascript'
   } else if (req.url.endsWith('css')) {
     headerContentType = 'text/css'
+  } else if (req.url.endsWith('aac')) {
+    headerContentType = 'audio/aac'
   } else {
     headerContentType = 'application/json;charset=utf-8'
   }
   res.header('Content-Type', headerContentType)
   next()
-  // var filePath = path.join(__dirname, '../', req.url)
-  // fs.readFile(filePath, function (err, fr) {
-  //   if (err) {
-
-  //   } else {
-  //     res.writeHead(200, {'Content-Type': headerContentType})
-  //     res.end(fr)
-  //   }
-  // })
 })
 app.use('/static', express.static('static'))
 
