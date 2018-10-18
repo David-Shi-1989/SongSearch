@@ -4,7 +4,7 @@
       <Input v-model="search.text">
         <Select v-model="search.from" slot="prepend" style="width: 80px">
           <Option value="kuwo">酷我</Option>
-          <Option value="kugou">酷狗</Option>
+          <Option value="qq">QQ音乐</Option>
         </Select>
         <Button slot="append" icon="ios-search" @click="onSearchBtnClick"></Button>
       </Input>
@@ -44,7 +44,7 @@ export default {
   data () {
     return {
       search: {
-        from: 'kuwo',
+        from: 'qq',
         text: ''
       },
       table: {
@@ -134,7 +134,8 @@ export default {
         method: 'POST',
         url: '/api/search/' + this.search.text,
         data: {
-          pageIndex: this.pagingTool.current
+          pageIndex: this.pagingTool.current,
+          from: this.search.from
         }
       }).then(res => {
         this.table.isLoading = false
@@ -157,7 +158,8 @@ export default {
           url: '/api/download/' + id,
           data: {
             name: name,
-            singer: singer
+            singer: singer,
+            from: this.search.from
           }
         }).then(res => {
           if (res.data) {
@@ -178,7 +180,8 @@ export default {
           url: '/api/getSongSrc/' + id,
           data: {
             name: name,
-            singer: singer
+            singer: singer,
+            from: this.search.from
           }
         }).then(res => {
           if (res.data) {

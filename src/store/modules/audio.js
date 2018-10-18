@@ -1,5 +1,3 @@
-import { stat } from "fs";
-
 var state = {
   songList: [],
   isPlay: false
