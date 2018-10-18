@@ -183,7 +183,12 @@ export default {
         }).then(res => {
           if (res.data) {
             this.$Loading.finish()
-            this.$refs.audioPlayer.playThisSong(name + ' - ' + singer, res.data)
+            let commitData = {
+              list: {title: name + ' - ' + singer, src: res.data},
+              isReplace: true,
+              isPlay: true
+            }
+            this.$store.commit('addSongToList',commitData)
           } else {
             this.$Loading.error()
             this.$Message.error('播放失败!')

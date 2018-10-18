@@ -46,7 +46,6 @@ export default {
   },
   mounted () {
     this.init()
-    this.play()
   },
   methods: {
     init () {
@@ -63,12 +62,30 @@ export default {
         this.audioFn.loadFile(1)
       }
     },
+    pause () {
+      if (this.audioFn) {
+        this.audioFn.loadFile(false)
+      }
+    },
     playThisSong (title, src) {
       if (title && src) {
         this.songList = [{title, src}]
       }
       this.init()
       this.play()
+    }
+  },
+  watch: {
+    '$store.getters.getSongList' (newVal) {
+      this.songList = newVal
+      this.init()
+    },
+    '$store.getters.getIsAudioPlay' (newVal) {
+      if (newVal === true) {
+        this.play()
+      } else {
+        this.pause()
+      }
     }
   }
 }
