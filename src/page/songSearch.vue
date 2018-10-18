@@ -94,7 +94,8 @@ export default {
                   'data-id': params.row.id,
                   'data-from': params.row.from,
                   'data-name': params.row.name,
-                  'data-singer': params.row.singer
+                  'data-singer': params.row.singer,
+                  'data-url': params.row.url
                 },
                 style: {
                   cursor: 'pointer',
@@ -103,7 +104,7 @@ export default {
                 on: {
                   click: function (evt) {
                     var dataSet = evt.currentTarget.dataset
-                    me.onPlayBtnClick(dataSet.id, dataSet.name, dataSet.singer)
+                    me.onPlayBtnClick(dataSet) //(dataSet.id, dataSet.name, dataSet.singer, dataSet.from, dataSet.url)
                   }
                 }
               })
@@ -172,29 +173,52 @@ export default {
         })
       }
     },
-    onPlayBtnClick (id, name, singer) {
-      if (id) {
-        this.$Loading.start()
-        this.$axios({
-          method: 'POST',
-          url: '/api/getSongSrc/' + id,
-          data: {
-            name: name,
-            singer: singer,
-            from: this.search.from
-          }
-        }).then(res => {
-          if (res.data) {
-            this.$Loading.finish()
-            let commitData = {
-              list: {title: name + ' - ' + singer, src: res.data},
-              isReplace: true,
-              isPlay: true
-            }
-            this.$store.commit('addSongToList',commitData)
-          } else {
-            this.$Loading.error()
-            this.$Message.error('播放失败!')
+    onPlayBtnClick (dataSet) {
+      this.$Loading.start()
+      var id = dataSet.id
+      var name = dataSet.name
+      var singer = dataSet.singer
+      var url = dataSet.url
+      var from = dataSet.from || this.search.from
+      debugger
+      getSongUrl().then((url) => {
+        debugger
+        let commitData = {
+          list: {title: name + ' - ' + singer, src: url},
+          isReplace: true,
+          isPlay: true
+        }
+        this.$store.commit('addSongToList', commitData)
+      }).catch((e) => {
+        this.$Loading.error()
+        this.$Message.error('播放失败!')
+        throw e
+      })
+      function getSongUrl () {
+        var me = this
+        debugger
+        return new Promise(function (resolve, reject) {
+          debugger
+          if (url) {
+            resolve(url)
+          } else if (id) {
+            me.$axios({
+              method: 'POST',
+              url: '/api/getSongSrc/' + id,
+              data: {
+                name: name,
+                singer: singer,
+                from: from
+              }
+            }).then(res => {
+              if (res.data) {
+                resolve(res.data)
+              } else {
+                reject(new Error('获取歌曲url失败'))
+                this.$Loading.error()
+                this.$Message.error('播放失败!')
+              }
+            })
           }
         })
       }

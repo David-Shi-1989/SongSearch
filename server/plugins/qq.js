@@ -3,8 +3,9 @@ const fs = require('fs')
 const http = require('http')
 // const buffer = require('buffer')
 var QQMusicDriver = {
-  searchUrl: 'https://c.y.qq.com/soso/fcgi-bin/client_search_cp?ct=24&qqmusic_ver=1298&new_json=1&remoteplace=txt.yqq.center&searchid=38694266684520015&t=0&aggr=1&cr=1&catZhida=1&lossless=0&flag_qc=0&p=1&n=20&w=%E5%91%A8%E6%9D%B0%E4%BC%A6&g_tk=5381&jsonpCallback=MusicJsonCallback13100777853610057&loginUin=0&hostUin=0&format=jsonp&inCharset=utf8&outCharset=utf-8&notice=0&platform=yqq&needNewCode=0', //'http://sou.kuwo.cn/ws/NSearch?type=music&key=%SINGER_NAME%&pn=%PAGE_CURRENT%',
+  searchUrl: 'https://c.y.qq.com/soso/fcgi-bin/client_search_cp?ct=24&qqmusic_ver=1298&new_json=1&remoteplace=txt.yqq.center&searchid=38694266684520015&t=0&aggr=1&cr=1&catZhida=1&lossless=0&flag_qc=0&p=%PAGE_CURRENT%&n=20&w=%SINGER_NAME%&g_tk=5381&jsonpCallback=%CALL_BACK&loginUin=0&hostUin=0&format=jsonp&inCharset=utf8&outCharset=utf-8&notice=0&platform=yqq&needNewCode=0', //'http://sou.kuwo.cn/ws/NSearch?type=music&key=%SINGER_NAME%&pn=%PAGE_CURRENT%',
   downloadUrl: 'http://antiserver.kuwo.cn/anti.s?format=aac|mp3&rid=%ID%&type=convert_url&response=res',
+  callbackName: 'MusicJsonCallback13100777853610057',
   // 从酷我搜索 歌手名
   searchSong: function (singerName, pageCurrent) {
     var me = this
@@ -22,7 +23,7 @@ var QQMusicDriver = {
     //   type: 'music',
     //   key: singerName
     // }
-    var url = this.searchUrl.replace('%SINGER_NAME%', singerName).replace('%PAGE_CURRENT%', current)
+    var url = this.searchUrl.replace('%SINGER_NAME%', encodeURIComponent(singerName)).replace('%PAGE_CURRENT%', current).replace('%CALL_BACK%', this.callbackName)
     return new Promise(function (resolve, reject) {
       request.get({url: url, headers: headers, gzip: true}, function (err, response2) {
         if (err) {
@@ -76,70 +77,28 @@ var QQMusicDriver = {
       }
       return album
     }
-    function getSingerName (html) {
-      var name = ''
-      var reg = /<p\s+class="s_name">[\w\W]*?<\/p>/g
-      var matchArr = html.match(reg)
-      if (matchArr.length > 0) {
-        var singerArr = matchArr[0].match(/title="[^"]+/g)
-        if (singerArr.length > 0) {
-          name = singerArr.map(function (item) {
-            return item.replace('title="','')
-          }).join('&')
-        } else {
-          throw new Error('Cannot match song\'s singer name in ' + matchArr[0])
-        }
-      } else {
-        throw new Error('Cannot match song\'s singer name in ' + html)
-      }
-      return name
+    function getSingerName (singerArr) {
+      return singerArr.map(function (item) {return item.name}).join('&')
     }
-    function getTotal (html) {
-      var total = 0
-      var reg = /相关歌曲<span>(\d+)<\/span>首/g
-      var matchResult = reg.exec(html)
-      if (matchResult[1]) {
-        total = parseInt(matchResult[1])
-      }
-      return total
+    function getTotal (data) {
+      return data.data.song.totalnum
     }
+    html = html.slice(html.indexOf('(')+1)
+    html = html.slice(0, html.length - 1)
+    var data = JSON.parse(html)
     var songList = []
-    var reg = /<div\s+class="list">[\w\W]*?<\/div>/g
-    var containerHtmlMatchArr = html.match(reg)
-    if (containerHtmlMatchArr.length > 0) {
-      var containerHtml = containerHtmlMatchArr[0]
-      var reg2 = /<li\s+class="clearfix">[\w\W]*?<\/li>/g
-      var songsHtmlMatchArr = containerHtml.match(reg2)
-      if (songsHtmlMatchArr && songsHtmlMatchArr.length > 0) {
-        for (var i = 0; i < songsHtmlMatchArr.length; i++) {
-          var curHtml = songsHtmlMatchArr[i]
-          // 歌曲名和ID】
-          var id = ''
-          var songNameHref = getSongNameAndHref(curHtml)
-          var idMatchArr = songNameHref.href.match(/\d+/)
-          if (idMatchArr.length > 0) {
-            id = idMatchArr[0]
-          }
-          // 专辑名
-          var albumName = getSongAlbumName(curHtml)
-          // 歌手名
-          var singerName = getSingerName(curHtml)
-          songList.push({
-            id: id,
-            name: songNameHref.name,
-            singer: singerName,
-            album: albumName,
-            href: songNameHref.href,
-            from: 'kuwo'
-          })
-        }
-      } else {
-        console.log('No data found in page.')
-      }
-    } else {
-      throw new Error('Cannot match div.list html list in Kuwo HTML')
+    for (let i = 0; i < data.data.song.list.length; i++) {
+      let curItem = data.data.song.list[i]
+      songList.push({
+        id: curItem.docid,
+        name: curItem.name,
+        singer: getSingerName(curItem.singer),
+        album: curItem.album.name,
+        url: curItem.url,
+        from: 'qq'
+      })
     }
-    return {list: songList, total: getTotal(html), pageSize: 25}
+    return {list: songList, total: getTotal(data), pageSize: 25}
   },
   // 根据歌曲id获取实际下载地址
   getSongUrl: function (id) {

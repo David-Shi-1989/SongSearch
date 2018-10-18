@@ -130,7 +130,6 @@ var kuwoDriver = {
             name: songNameHref.name,
             singer: singerName,
             album: albumName,
-            href: songNameHref.href,
             from: 'kuwo'
           })
         }
