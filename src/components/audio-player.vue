@@ -56,10 +56,10 @@ export default {
           alert(msg)
         }
       }
-      this.audioFn = audioPlay(setConfig)
+      this.audioFn = this.$plugins.audioPlay(setConfig)
     },
     play () {
-      if (this.audioFn) {
+      if (this.songList.length > 0 && this.audioFn) {
         this.audioFn.loadFile(1)
       }
     },

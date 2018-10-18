@@ -8,10 +8,9 @@ const webpackDevMiddleware = require('webpack-dev-middleware')
 
 const webpackServerConfig = require('../build/webpack.server.conf')
 const compiler = webpack(webpackServerConfig)
+const apiRouter = require('./api/index')
 
 const DIST_DIR = path.join(__dirname, '../', 'dist')
-
-var KuwoDriver = require('./plugins/kuwo')
 
 app.use(express.static(path.join(__dirname, 'static')))
 app.use(express.static(path.join(__dirname, 'download')))
@@ -65,27 +64,7 @@ app.get(['/bootstrap.html'], (req, res) => {
     }
   })
 })
-app.post('/search/:name', function (req, res) {
-  let singerName = req.params.name
-  let pageCurrent = req.body.pageIndex || 1
-  KuwoDriver.searchSong(singerName, pageCurrent).then((body) => {
-    res.send(body)
-  })
-})
-app.post('/download/:id', function (req, res) {
-  var data = req.body
-  var fileName = data.name + ' - ' + data.singer
-  var id = req.params.id
-  KuwoDriver.downloadSong(id, fileName).then((isSuccess) => {
-    res.send(isSuccess)
-  })
-})
-app.post('/getSongSrc/:id', function (req, res) {
-  var id = req.params.id
-  KuwoDriver.getSongUrl(id).then((src) => {
-    res.send(src)
-  })
-})
+app.use('/api', apiRouter)
 app.listen(3000, () => {
   console.log('App listening on port 3000')
 })

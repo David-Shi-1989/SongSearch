@@ -9,13 +9,17 @@ import iview from 'iview'
 import '../node_modules/iview/dist/styles/iview.css'
 import $ from 'jquery'
 import Axios from 'axios'
-import '../static/vendor/audioPlayer/js/audio'
+import store from './store/index'
+import audioPlay from '../static/vendor/audioPlayer/js/audio'
 import '../node_modules/font-awesome/css/font-awesome.css'
 
 Vue.use(iview)
 
 Vue.config.productionTip = false
 Vue.prototype.$axios = Axios
+Vue.prototype.$plugins = {
+  audioPlay
+}
 
 /* eslint-disable no-new */
 new Vue({
@@ -23,5 +27,7 @@ new Vue({
   router,
   components: { App },
   template: '<App/>',
-  $: $
+  $: $,
+  store: store,
+  audioPlay: audioPlay
 })

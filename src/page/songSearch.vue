@@ -132,7 +132,7 @@ export default {
       this.$Loading.start()
       this.$axios({
         method: 'POST',
-        url: '/search/' + this.search.text,
+        url: '/api/search/' + this.search.text,
         data: {
           pageIndex: this.pagingTool.current
         }
@@ -154,7 +154,7 @@ export default {
         this.$Loading.start()
         this.$axios({
           method: 'POST',
-          url: '/download/' + id,
+          url: '/api/download/' + id,
           data: {
             name: name,
             singer: singer
@@ -175,7 +175,7 @@ export default {
         this.$Loading.start()
         this.$axios({
           method: 'POST',
-          url: '/getSongSrc/' + id,
+          url: '/api/getSongSrc/' + id,
           data: {
             name: name,
             singer: singer
