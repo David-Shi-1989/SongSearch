@@ -13,7 +13,6 @@ const apiRouter = require('./api/index')
 const DIST_DIR = path.join(__dirname, '../', 'dist')
 
 app.use(express.static(path.join(__dirname, 'static')))
-app.use(express.static(path.join(__dirname, 'download')))
 
 app.get('*', function (req, res, next) {
   res.header('Access-Control-Allow-Origin', '*')
@@ -24,8 +23,8 @@ app.get('*', function (req, res, next) {
     headerContentType = 'application/javascript'
   } else if (req.url.endsWith('css')) {
     headerContentType = 'text/css'
-  } else if (req.url.endsWith('aac')) {
-    headerContentType = 'audio/aac'
+  } else if (req.url.endsWith('mp3') || req.url.endsWith('aac') || req.url.endsWith('m4a')) {
+    headerContentType = 'audio/' + req.url.slice(req.url.length - 3)
   } else {
     headerContentType = 'application/json;charset=utf-8'
   }

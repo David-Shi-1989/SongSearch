@@ -1,12 +1,16 @@
 const request = require('request')
 const fs = require('fs')
 const http = require('http')
-// const buffer = require('buffer')
+const path = require('path')
+var convertUtil = require('../utils/convertAudoFormat')
 var QQMusicDriver = {
   searchUrl: 'https://c.y.qq.com/soso/fcgi-bin/client_search_cp?ct=24&qqmusic_ver=1298&new_json=1&remoteplace=txt.yqq.center&searchid=38694266684520015&t=0&aggr=1&cr=1&catZhida=1&lossless=0&flag_qc=0&p=%PAGE_CURRENT%&n=20&w=%SINGER_NAME%&g_tk=5381&jsonpCallback=%CALL_BACK&loginUin=0&hostUin=0&format=jsonp&inCharset=utf8&outCharset=utf-8&notice=0&platform=yqq&needNewCode=0', //'http://sou.kuwo.cn/ws/NSearch?type=music&key=%SINGER_NAME%&pn=%PAGE_CURRENT%',
   downloadUrl: 'http://antiserver.kuwo.cn/anti.s?format=aac|mp3&rid=%ID%&type=convert_url&response=res',
+  vKeyUrl: 'https://u.y.qq.com/cgi-bin/musicu.fcg',
+  songSrcPrefix: 'http://124.89.197.20/amobile.music.tc.qq.com/',
   callbackName: 'MusicJsonCallback13100777853610057',
-  // 从酷我搜索 歌手名
+  callbackName2: 'getplaysongvkey7349741100341796',
+  // 从QQ音乐搜索 歌手名
   searchSong: function (singerName, pageCurrent) {
     var me = this
     var current = pageCurrent || 1
@@ -29,14 +33,85 @@ var QQMusicDriver = {
         if (err) {
           reject(err)
         } else {
-          var arr = me.handleHTML(response2.body)
+          var arr = me.handleSearchListHtml(response2.body)
           resolve(arr)
         }
       })
     })
   },
-  // 处理酷我的html
-  handleHTML: function (html) {
+  // 根据歌曲id获取实际地址,后续还需格式转化m4a->mp3
+  getOriginalSongUrl: function (songId) {
+    var me = this
+    var guid = '464820006'
+    var headers = {
+      accept: '*/*',
+      'accept-encoding': 'gzip, deflate, br',
+      referer: 'https://y.qq.com/portal/player.html',
+      'user-agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36'
+    }
+    var paramData = {
+      "req_0": {
+        "module":"vkey.GetVkeyServer",
+        "method":"CgiGetVkey",
+        "param": {
+          "guid": guid,
+          "songmid": [songId.toString()],
+          "songtype": [0],
+          uin: '0',
+          loginflag: 1,
+          "platform":"20"
+        }
+      },
+      "comm": {
+        "uin": 0,
+        "format":"json",
+        "ct":20,
+        "cv":0
+      }
+    }
+    var params = {
+      callback: this.callbackName2,
+      g_tk: 5381,
+      jsonpCallback: this.callbackName2,
+      loginUin: 0,
+      hostUin: 0,
+      format: 'jsonp',
+      inCharset: 'utf8',
+      outCharset: 'utf-8',
+      notice: 0,
+      platform: 'yqq',
+      needNewCode: 0,
+      data: JSON.stringify(paramData)
+    }
+    var paramStr = ''
+    for (var key in params) {
+      paramStr += (key + '=' + encodeURIComponent(params[key])) + '&'
+    }
+    var url = this.vKeyUrl + '?' + paramStr
+    return new Promise(function (resolve, reject) {
+      request.get({url: url, headers: headers, gzip: true}, function (err, response2) {
+        if (!err) {
+          var src = me.handleVkeyHtml(response2.body)
+          resolve(src)
+        } else {
+          reject(err)
+        }
+      })
+    })
+  },
+  getSongUrl: function (songId, name, singer) {
+    var fileName = name + ' - ' + singer
+    var me = this
+    return new Promise(function (resolve, reject) {
+      me.downloadSong(songId, fileName).then((outputPath) => {
+        resolve(outputPath)
+      }).catch((e) => {
+        throw e
+      })
+    })
+  },
+  // 处理QQ音乐的html
+  handleSearchListHtml: function (html) {
     function getSongNameAndHref (html) {
       var name = ''
       var href = ''
@@ -90,36 +165,35 @@ var QQMusicDriver = {
     for (let i = 0; i < data.data.song.list.length; i++) {
       let curItem = data.data.song.list[i]
       songList.push({
-        id: curItem.docid,
+        id: curItem.mid,
         name: curItem.name,
         singer: getSingerName(curItem.singer),
         album: curItem.album.name,
-        url: curItem.url,
+        // url: curItem.url,
         from: 'qq'
       })
     }
     return {list: songList, total: getTotal(data), pageSize: 25}
   },
-  // 根据歌曲id获取实际下载地址
-  getSongUrl: function (id) {
-    var url = this.downloadUrl.replace('%ID%', id)
-    return new Promise(function (resolve, reject) {
-      http.get(url, function (res) {
-        var location = res.headers.location
-        if (location) {
-          resolve(location)
-        } else {
-          reject(new Error('Cannot get music location from kuwo with music id ' + id))
-        }
-      })
-    })
+  handleVkeyHtml: function (html) {
+    html = html.slice(html.indexOf('(')+1)
+    html = html.slice(0, html.length - 1)
+    var data = JSON.parse(html)
+    if (data && data.req_0.data.midurlinfo.length > 0) {
+      // 成功拿到歌曲的url
+      var src = data.req_0.data.midurlinfo[0].purl
+      return this.songSrcPrefix + src
+    } else {
+      // 拿不到
+      throw new Error('获取不到url')
+    }
   },
   // 下载歌曲
   downloadSong: function (id, fileName) {
-    var path = './static/download/' + fileName + '.aac'
+    var savePath = './static/download/' + fileName + '.m4a'
     var me = this
     return new Promise(function (resolve, reject) {
-      me.getSongUrl(id).then((location) => {
+      me.getOriginalSongUrl(id).then((location) => {
         http.get(location, function (res, err) {
           var buffers = []
           res.on('data', function (data) {
@@ -127,11 +201,16 @@ var QQMusicDriver = {
           })
           res.on('end', function () {
             var fileBuffer = Buffer.concat(buffers)
-            fs.writeFile(path, fileBuffer, function (err) {
+            fs.writeFile(savePath, fileBuffer, function (err) {
               if (err) {
-                reject(new Error('fail to save audio file.' + path))
+                reject(new Error('fail to save audio file.' + savePath))
               } else {
-                resolve(true)
+                var outPath = './static/download/qq/' + fileName + '.mp3'
+                convertUtil.covertFormat(savePath, outPath).then((outputPath) => {
+                  resolve(outputPath)
+                }).catch((e) => {
+                  throw e
+                })
               }
             })
           })

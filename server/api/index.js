@@ -32,6 +32,11 @@ router.post('/download/:id', function (req, res) {
         res.send(isSuccess)
       })
       break
+    case 'qq':
+      QQMusicDriver.downloadSong(id, fileName).then((isSuccess) => {
+        res.send(isSuccess)
+      })
+      break
     default:
       res.send('Wrong param from ' + req.body.from)
       break
@@ -43,6 +48,11 @@ router.post('/getSongSrc/:id', function (req, res) {
   switch (data.from) {
     case 'kuwo':
       KuwoDriver.getSongUrl(id).then((src) => {
+        res.send(src)
+      })
+      break
+    case 'qq':
+      QQMusicDriver.getSongUrl(id, data.name, data.singer).then((src) => {
         res.send(src)
       })
       break

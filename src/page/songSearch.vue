@@ -104,7 +104,7 @@ export default {
                 on: {
                   click: function (evt) {
                     var dataSet = evt.currentTarget.dataset
-                    me.onPlayBtnClick(dataSet) //(dataSet.id, dataSet.name, dataSet.singer, dataSet.from, dataSet.url)
+                    me.onPlayBtnClick(dataSet) // (dataSet.id, dataSet.name, dataSet.singer, dataSet.from, dataSet.url)
                   }
                 }
               })
@@ -175,14 +175,13 @@ export default {
     },
     onPlayBtnClick (dataSet) {
       this.$Loading.start()
+      var me = this
       var id = dataSet.id
       var name = dataSet.name
       var singer = dataSet.singer
       var url = dataSet.url
       var from = dataSet.from || this.search.from
-      debugger
       getSongUrl().then((url) => {
-        debugger
         let commitData = {
           list: {title: name + ' - ' + singer, src: url},
           isReplace: true,
@@ -195,8 +194,6 @@ export default {
         throw e
       })
       function getSongUrl () {
-        var me = this
-        debugger
         return new Promise(function (resolve, reject) {
           debugger
           if (url) {
