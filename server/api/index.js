@@ -53,7 +53,7 @@ router.post('/getSongSrc/:id', function (req, res) {
       break
     case 'qq':
       QQMusicDriver.getSongUrl(id, data.name, data.singer).then((src) => {
-        res.send(src)
+        res.send(src.replace('./static/', '/static/'))
       })
       break
     default:

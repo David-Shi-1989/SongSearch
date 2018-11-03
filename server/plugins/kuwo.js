@@ -107,7 +107,7 @@ var kuwoDriver = {
     var songList = []
     var reg = /<div\s+class="list">[\w\W]*?<\/div>/g
     var containerHtmlMatchArr = html.match(reg)
-    if (containerHtmlMatchArr.length > 0) {
+    if (containerHtmlMatchArr && containerHtmlMatchArr.length > 0) {
       var containerHtml = containerHtmlMatchArr[0]
       var reg2 = /<li\s+class="clearfix">[\w\W]*?<\/li>/g
       var songsHtmlMatchArr = containerHtml.match(reg2)
@@ -157,7 +157,7 @@ var kuwoDriver = {
   },
   // 下载歌曲
   downloadSong: function (id, fileName) {
-    var path = './static/download/' + fileName + '.aac'
+    var path = './static/download/kuwo/' + fileName + '.aac'
     var me = this
     return new Promise(function (resolve, reject) {
       me.getSongUrl(id).then((location) => {
