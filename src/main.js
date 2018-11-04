@@ -5,6 +5,7 @@ import App from './App'
 import router from './router'
 
 import 'babel-polyfill'
+import '../static/style/main.css'
 import iview from 'iview'
 import '../node_modules/iview/dist/styles/iview.css'
 import $ from 'jquery'

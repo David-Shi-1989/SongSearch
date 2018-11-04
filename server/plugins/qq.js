@@ -1,7 +1,7 @@
 const request = require('request')
 const fs = require('fs')
 const http = require('http')
-const path = require('path')
+const setting = require('./setting.json')
 var convertUtil = require('../utils/convertAudoFormat')
 var QQMusicDriver = {
   searchUrl: 'https://c.y.qq.com/soso/fcgi-bin/client_search_cp?ct=24&qqmusic_ver=1298&new_json=1&remoteplace=txt.yqq.center&searchid=38694266684520015&t=0&aggr=1&cr=1&catZhida=1&lossless=0&flag_qc=0&p=%PAGE_CURRENT%&n=20&w=%SINGER_NAME%&g_tk=5381&jsonpCallback=%CALL_BACK&loginUin=0&hostUin=0&format=jsonp&inCharset=utf8&outCharset=utf-8&notice=0&platform=yqq&needNewCode=0', //'http://sou.kuwo.cn/ws/NSearch?type=music&key=%SINGER_NAME%&pn=%PAGE_CURRENT%',
@@ -190,7 +190,7 @@ var QQMusicDriver = {
   },
   // 下载歌曲
   downloadSong: function (id, fileName) {
-    var savePath = './static/download/' + fileName + '.m4a'
+    var savePath = setting.filePath.replace('%FROM%','qq').replace('%FILENAME%',fileName) + '.m4a'
     var me = this
     return new Promise(function (resolve, reject) {
       me.getOriginalSongUrl(id).then((location) => {
@@ -205,8 +205,9 @@ var QQMusicDriver = {
               if (err) {
                 reject(new Error('fail to save audio file.' + savePath))
               } else {
-                var outPath = './static/download/qq/' + fileName + '.mp3'
+                var outPath = setting.filePath.replace('%FROM%','qq').replace('%FILENAME%',fileName) + '.mp3'
                 convertUtil.covertFormat(savePath, outPath).then((outputPath) => {
+                  fs.unlink(outPath.replace('.mp3','.m4a'))
                   resolve(outputPath)
                 }).catch((e) => {
                   throw e

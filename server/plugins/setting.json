@@ -1,0 +1,4 @@
+{
+  "fileName": "%SINGER% - %NAME%",
+  "filePath": "./static/download/%FROM%/%FILENAME%"
+}

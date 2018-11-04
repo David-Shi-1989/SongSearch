@@ -1,13 +1,22 @@
 <template>
   <div class="sww-song-page-wrap">
-    <div class="sww-form-wrap">
-      <Input v-model="search.text">
-        <Select v-model="search.from" slot="prepend" style="width: 80px">
-          <Option value="kuwo">酷我</Option>
-          <Option value="qq">QQ音乐</Option>
-        </Select>
-        <Button slot="append" icon="ios-search" @click="onSearchBtnClick"></Button>
-      </Input>
+    <div class="sww-form-wrap sww-clear-float">
+      <div>
+        <Input v-model="search.text">
+          <Select v-model="search.from" slot="prepend" style="width: 80px">
+            <Option value="kuwo">酷我</Option>
+            <Option value="qq">QQ音乐</Option>
+          </Select>
+          <Button slot="append" icon="ios-search" @click="onSearchBtnClick"></Button>
+        </Input>
+      </div>
+      <div>
+        <Label>下载</Label>
+        <iSwitch size="large" v-model="runtime.canDownload">
+          <span slot="open">开启</span>
+          <span slot="close">关闭</span>
+        </iSwitch>
+      </div>
     </div>
     <div>
       <div class="sww-table-wrap">
@@ -39,7 +48,7 @@
               <Tabs value="sumList">
                 <TabPane label="歌曲库" name="sumList">
                   <div style="height:400px;overflow-x:hidden;overflow-y:auto;">
-                    <Row v-for="(item,idx) in list.download" class="css-download-list-item">
+                    <Row v-for="(item,idx) in list.download" :key="idx" class="css-download-list-item">
                       <iCol span="4">{{idx+1}}</iCol>
                       <iCol span="14">{{item.name + ' - ' + item.singer}}</iCol>
                       <iCol span="3"><img class="css-download-logo" :src="'/static/image/'+item.from+'-music.png'"></iCol>
@@ -63,7 +72,6 @@
 
 <script>
 import audioPlayer from '@/components/audio-player'
-import { setInterval, clearInterval } from 'timers';
 export default {
   name: 'songSearch',
   components: {audioPlayer},
@@ -158,6 +166,9 @@ export default {
       },
       timer: {
         downloadLoop: null
+      },
+      runtime: {
+        canDownload: false
       }
     }
   },
@@ -203,6 +214,9 @@ export default {
       })
     },
     loopTheDownloadList () {
+      if (!this.runtime.canDownload) {
+        return
+      }
       let isDownloading = this.list.download.some(function (item) {
         return item.status === 1
       })
@@ -267,7 +281,9 @@ export default {
       }
     },
     doDownLoad (id, name, singer, from) {
-      debugger
+      if (!this.runtime.canDownload) {
+        return
+      }
       var me = this
       return new Promise(function (resolve, reject) {
         if (id && name && singer) {
@@ -331,6 +347,10 @@ export default {
 .sww-form-wrap {
   width: 400px;
   margin-bottom: 20px;
+}
+.sww-form-wrap > div {
+  float: left;
+  line-height: 32px;
 }
 .sww-page-wrap {
   text-align: right;

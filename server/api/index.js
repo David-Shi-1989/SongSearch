@@ -1,5 +1,6 @@
 const express = require('express')
 const router = express.Router()
+const setting = require('../plugins/setting.json')
 var KuwoDriver = require('../plugins/kuwo')
 var QQMusicDriver = require('../plugins/qq')
 
@@ -24,7 +25,7 @@ router.post('/search/:name', function (req, res) {
 })
 router.post('/download/:id', function (req, res) {
   var data = req.body
-  var fileName = data.name + ' - ' + data.singer
+  var fileName = setting.fileName.replace('%SINGER%',data.singer).replace('%NAME%',data.name)
   var id = req.params.id
   switch (data.from) {
     case 'kuwo':

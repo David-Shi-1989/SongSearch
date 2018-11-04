@@ -1,7 +1,7 @@
 const request = require('request')
 const fs = require('fs')
 const http = require('http')
-// const buffer = require('buffer')
+const setting = require('./setting.json')
 var kuwoDriver = {
   searchUrl: 'http://sou.kuwo.cn/ws/NSearch?type=music&key=%SINGER_NAME%&pn=%PAGE_CURRENT%',
   downloadUrl: 'http://antiserver.kuwo.cn/anti.s?format=aac|mp3&rid=%ID%&type=convert_url&response=res',
@@ -114,7 +114,7 @@ var kuwoDriver = {
       if (songsHtmlMatchArr && songsHtmlMatchArr.length > 0) {
         for (var i = 0; i < songsHtmlMatchArr.length; i++) {
           var curHtml = songsHtmlMatchArr[i]
-          // 歌曲名和ID】
+          // 歌曲名和ID
           var id = ''
           var songNameHref = getSongNameAndHref(curHtml)
           var idMatchArr = songNameHref.href.match(/\d+/)
@@ -157,7 +157,7 @@ var kuwoDriver = {
   },
   // 下载歌曲
   downloadSong: function (id, fileName) {
-    var path = './static/download/kuwo/' + fileName + '.aac'
+    var path = setting.filePath.replace('%FROM%','kuwo').replace('%FILENAME%',fileName) + '.aac'
     var me = this
     return new Promise(function (resolve, reject) {
       me.getSongUrl(id).then((location) => {
