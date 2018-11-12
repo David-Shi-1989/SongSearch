@@ -100,7 +100,7 @@ var QQMusicDriver = {
     })
   },
   getSongUrl: function (songId, name, singer) {
-    var fileName = name + ' - ' + singer
+    var fileName = setting.fileName.replace('%SINGER%',singer).replace('%NAME%', name)
     var me = this
     return new Promise(function (resolve, reject) {
       me.downloadSong(songId, fileName).then((outputPath) => {
