@@ -7,7 +7,7 @@ var QQMusicDriver = {
   searchUrl: 'https://c.y.qq.com/soso/fcgi-bin/client_search_cp?ct=24&qqmusic_ver=1298&new_json=1&remoteplace=txt.yqq.center&searchid=38694266684520015&t=0&aggr=1&cr=1&catZhida=1&lossless=0&flag_qc=0&p=%PAGE_CURRENT%&n=20&w=%SINGER_NAME%&g_tk=5381&jsonpCallback=%CALL_BACK&loginUin=0&hostUin=0&format=jsonp&inCharset=utf8&outCharset=utf-8&notice=0&platform=yqq&needNewCode=0', //'http://sou.kuwo.cn/ws/NSearch?type=music&key=%SINGER_NAME%&pn=%PAGE_CURRENT%',
   downloadUrl: 'http://antiserver.kuwo.cn/anti.s?format=aac|mp3&rid=%ID%&type=convert_url&response=res',
   vKeyUrl: 'https://u.y.qq.com/cgi-bin/musicu.fcg',
-  songSrcPrefix: 'http://124.89.197.20/amobile.music.tc.qq.com/',
+  songSrcPrefix: 'http://isure.stream.qqmusic.qq.com/',
   callbackName: 'MusicJsonCallback13100777853610057',
   callbackName2: 'getplaysongvkey7349741100341796',
   // 从QQ音乐搜索 歌手名
@@ -193,30 +193,34 @@ var QQMusicDriver = {
     var savePath = setting.filePath.replace('%FROM%','qq').replace('%FILENAME%',fileName) + '.m4a'
     var me = this
     return new Promise(function (resolve, reject) {
-      me.getOriginalSongUrl(id).then((location) => {
-        http.get(location, function (res, err) {
-          var buffers = []
-          res.on('data', function (data) {
-            buffers.push(data)
-          })
-          res.on('end', function () {
-            var fileBuffer = Buffer.concat(buffers)
-            fs.writeFile(savePath, fileBuffer, function (err) {
-              if (err) {
-                reject(new Error('fail to save audio file.' + savePath))
-              } else {
-                var outPath = setting.filePath.replace('%FROM%','qq').replace('%FILENAME%',fileName) + '.mp3'
-                convertUtil.covertFormat(savePath, outPath).then((outputPath) => {
-                  fs.unlink(outPath.replace('.mp3','.m4a'))
-                  resolve(outputPath)
-                }).catch((e) => {
-                  throw e
-                })
-              }
+      try {
+        me.getOriginalSongUrl(id).then((location) => {
+          http.get(location, function (res, err) {
+            var buffers = []
+            res.on('data', function (data) {
+              buffers.push(data)
+            })
+            res.on('end', function () {
+              var fileBuffer = Buffer.concat(buffers)
+              fs.writeFile(savePath, fileBuffer, function (err) {
+                if (err) {
+                  reject(new Error('fail to save audio file.' + savePath))
+                } else {
+                  var outPath = setting.filePath.replace('%FROM%','qq').replace('%FILENAME%',fileName) + '.mp3'
+                  convertUtil.covertFormat(savePath, outPath).then((outputPath) => {
+                    fs.unlink(outPath.replace('.mp3','.m4a'))
+                    resolve(outputPath)
+                  }).catch((e) => {
+                    throw e
+                  })
+                }
+              })
             })
           })
         })
-      })
+      } catch (e) {
+        console.error(e)
+      }
     })
   }
 }
