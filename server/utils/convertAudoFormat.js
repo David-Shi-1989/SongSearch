@@ -13,7 +13,6 @@ var util = {
           }
         })
         .on('error', function (err) {
-          debugger
           reject(err)
         })
       } else {
