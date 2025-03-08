@@ -4,6 +4,51 @@
   // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
+  {
+    "name": "Launch Express",
+    "program": "${workspaceFolder}/server/index.js",
+    "request": "launch",
+    "skipFiles": [
+      "<node_internals>/**"
+    ],
+    "type": "node"
+  },
+  {
+    "name": "Launch Calculate song number",
+    "program": "${workspaceFolder}/server/walker/calculateSongNumber.js",
+    "request": "launch",
+    "skipFiles": [
+      "<node_internals>/**"
+    ],
+    "type": "node"
+  },
+  {
+    "name": "Launch Donwload",
+    "program": "${workspaceFolder}/server/walker/download.js",
+    "request": "launch",
+    "skipFiles": [
+      "<node_internals>/**"
+    ],
+    "type": "node"
+  },
+    {
+      "name": "Launch PostHandler",
+      "program": "${workspaceFolder}/server/walker/post-handler.js",
+      "request": "launch",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "node"
+    },
+    {
+      "name": "Launch Walker",
+      "program": "${workspaceFolder}/server/walker/index.js",
+      "request": "launch",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "node"
+    },
     {
       "type": "node",
       "request": "launch",
