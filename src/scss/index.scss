@@ -1,0 +1,33 @@
+@use './color.scss' as color;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+ul, ol {
+  list-style: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+#app {
+  width: 100%;
+  height: 100%;
+  & > section {
+    height: 100%;
+  }
+  header.el-header {
+    background-color: color.$theme-header-bg-color;
+  }
+  footer.el-footer {
+    height: 70px !important;
+    padding: 0 5px;
+  }
+}
