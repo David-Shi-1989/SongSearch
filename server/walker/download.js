@@ -156,9 +156,6 @@ async function downloadByLink(id, link, text, folderPath) {
     }
   })
 }
-(() => {
-  authorNames.forEach(async author => await getOneAuthor(author));
-})();
 
 // 判断是否有播放器
 async function hasPlayer(page) {
@@ -210,3 +207,12 @@ function sleep(second) {
 const sanitizeFilename = (name) => {
   return name.replace(/[\/\\:*?"<>|]/g, '-'); // 替换特殊字符
 };
+
+function start(names) {
+  (names || authorNames).forEach(async author => await getOneAuthor(author));
+}
+
+module.exports = {
+  DOWNLOAD_PATH,
+  sanitizeFilename
+}
