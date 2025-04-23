@@ -59,23 +59,21 @@ for section in $SECTION_NAMES; do
     OS=$(uname -s)
     user_input=""
 
-    if [[ "$OS" =~ MINGW.* || "$OS" =~ MSYS.* ]]; then
-      echo "🟡 Detected Windows Git Bash environment: $OS"
-
-      echo "🟡 Invoking PowerShell InputBox..."
+    if [[ "$OS" == "Windows_NT" || "$OS" =~ MINGW.* || "$OS" =~ MSYS.* ]]; then
+      echo "🟡 Detected Windows: $OS"
       user_input=$(powershell.exe -Command "& {
         Add-Type -AssemblyName Microsoft.VisualBasic;
         $result = [Microsoft.VisualBasic.Interaction]::InputBox('$PROMPT_MESSAGE', 'Git Pre-Commit Hook', '');
         Write-Output $result
       }")
 
-      echo "🟡 PowerShell InputBox result: $user_input"
+      echo "🟡 User input: $user_input"
 
       if [ -z "$user_input" ]; then
-        echo "🔴 No input detected. Blocking commit."
+        echo "🔴 No input provided. Blocking commit."
         exit 1
       fi
-      # user_input=$(powershell.exe -Command "& {Add-Type -AssemblyName Microsoft.VisualBasic; $result=[Microsoft.VisualBasic.Interaction]::InputBox(\"$PROMPT_MESSAGE\", 'Git Pre-Commit Hook', ''); Write-Output $result}")
+    fi
     elif [[ "$OS" == "Darwin" ]]; then
       user_input=$(osascript -e "tell app \"System Events\" to display dialog \"$PROMPT_MESSAGE\" default answer \"\"" -e "text returned of result")
     else
