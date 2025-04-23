@@ -3,14 +3,13 @@ set -e
 
 echo "🚀 Entering pre-commit notification script..."
 
-# 引入 UI 模块
 source "$(dirname "$0")/ui.sh"
 
 NOTIFICATION_CONFIG=".husky/pre-commit-notification/config.ini"
 CACHE_FILE=".husky/pre-commit-notification/notification-counts.txt"
 CURRENT_DATE=$(date +%Y-%m-%d)
 
-# 日期转换函数
+# Parse date string to timestamp (cross-platform)
 parse_date() {
   local date_str=$1
   if date -d "$date_str" "+%s" >/dev/null 2>&1; then
@@ -20,13 +19,14 @@ parse_date() {
   fi
 }
 
-# 初始化缓存文件
+# Reset support
 if [ "$1" = "--reset" ]; then
   echo "# pre-commit notification counter" > "$CACHE_FILE"
   echo "✅ Notification count reset."
   exit 0
 fi
 
+# Initialize count cache
 if [ ! -f "$CACHE_FILE" ]; then
   echo "# pre-commit notification counter" > "$CACHE_FILE"
 fi
@@ -49,9 +49,6 @@ for section in $SECTION_NAMES; do
   start_ts=$(parse_date "$start_date") || continue
   end_ts=$(parse_date "$end_date") || continue
   now_ts=$(date +%s)
-
-  # Debug log
-  echo "🧪 Section [$section] | now=$now_ts | range=[$start_ts ~ $end_ts]"
 
   if [ "$now_ts" -ge "$start_ts" ] && [ "$now_ts" -le "$end_ts" ]; then
     current_count=$(grep "^\[$section\]=" "$CACHE_FILE" | cut -d'=' -f2)
