@@ -73,7 +73,6 @@ for section in $SECTION_NAMES; do
         echo "🔴 No input provided. Blocking commit."
         exit 1
       fi
-    fi
     elif [[ "$OS" == "Darwin" ]]; then
       user_input=$(osascript -e "tell app \"System Events\" to display dialog \"$PROMPT_MESSAGE\" default answer \"\"" -e "text returned of result")
     else
@@ -87,7 +86,6 @@ for section in $SECTION_NAMES; do
     tmp_file=$(mktemp)
     jq --arg section "$section" --argjson count "$new_count" '.[$section] = $count' "$CACHE_FILE" > "$tmp_file" && mv "$tmp_file" "$CACHE_FILE"
   fi
-
 done
 
 exit 0
