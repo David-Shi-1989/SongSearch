@@ -1,5 +1,5 @@
 #!/bin/bash
-
+echo "into Script"
 set -e
 
 NOTIFICATION_CONFIG=".husky/pre-commit-notification/config.ini"
