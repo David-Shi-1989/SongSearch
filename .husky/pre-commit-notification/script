@@ -1,20 +1,34 @@
 #!/bin/bash
-echo "into Script"
 set -e
 
+echo "🚀 Entering pre-commit notification script..."
+
+# 引入 UI 模块
+source "$(dirname "$0")/ui.sh"
+
 NOTIFICATION_CONFIG=".husky/pre-commit-notification/config.ini"
-CACHE_FILE=".husky/pre-commit-notification/pre-commit-notification-counts.json"
+CACHE_FILE=".husky/pre-commit-notification/notification-counts.txt"
 CURRENT_DATE=$(date +%Y-%m-%d)
 
-# Reset support
-if [[ "$1" == "--reset" ]]; then
-  echo '{}' > "$CACHE_FILE"
-  echo "✅ Notification cache reset."
+# 日期转换函数
+parse_date() {
+  local date_str=$1
+  if date -d "$date_str" "+%s" >/dev/null 2>&1; then
+    date -d "$date_str" "+%s"
+  else
+    date -j -f "%Y-%m-%d" "$date_str" "+%s"
+  fi
+}
+
+# 初始化缓存文件
+if [ "$1" = "--reset" ]; then
+  echo "# pre-commit notification counter" > "$CACHE_FILE"
+  echo "✅ Notification count reset."
   exit 0
 fi
 
 if [ ! -f "$CACHE_FILE" ]; then
-  echo '{}' > "$CACHE_FILE"
+  echo "# pre-commit notification counter" > "$CACHE_FILE"
 fi
 
 SECTION_NAMES=$(grep "^\[" "$NOTIFICATION_CONFIG" | sed 's/\[//;s/\]//')
@@ -28,63 +42,52 @@ for section in $SECTION_NAMES; do
   text_en=$(echo "$content" | grep -E "^text_en=" | cut -d'=' -f2- | xargs)
   max_count=$(echo "$content" | grep -E "^max=|^max_count=" | cut -d'=' -f2 | xargs)
 
-  if [[ -z "$start_date" || -z "$end_date" ]]; then
+  if [ -z "$start_date" ] || [ -z "$end_date" ]; then
     continue
   fi
 
-  start_ts=$(date -j -f "%Y-%m-%d" "$start_date" "+%s") || continue
-  end_ts=$(date -j -f "%Y-%m-%d" "$end_date" "+%s") || continue
-  now_ts=$(date "+%s")
+  start_ts=$(parse_date "$start_date") || continue
+  end_ts=$(parse_date "$end_date") || continue
+  now_ts=$(date +%s)
 
-  if [[ "$now_ts" -ge "$start_ts" && "$now_ts" -le "$end_ts" ]]; then
-    current_count=$(jq -r --arg section "$section" '.[$section] // 0' "$CACHE_FILE")
+  # Debug log
+  echo "🧪 Section [$section] | now=$now_ts | range=[$start_ts ~ $end_ts]"
 
-    if [[ -n "$max_count" && "$current_count" -ge "$max_count" ]]; then
+  if [ "$now_ts" -ge "$start_ts" ] && [ "$now_ts" -le "$end_ts" ]; then
+    current_count=$(grep "^\[$section\]=" "$CACHE_FILE" | cut -d'=' -f2)
+    current_count=${current_count:-0}
+
+    if [ -n "$max_count" ] && [ "$current_count" -ge "$max_count" ]; then
       continue
     fi
 
-    # Format full message: English first, then Chinese
-    PROMPT_MESSAGE=""
-    if [[ -n "$text_en" ]]; then
-      PROMPT_MESSAGE="· English Notice\n$text_en"
+    PROMPT_MESSAGE=$(
+      cat <<EOF
+· English Notice
+$text_en
+
+· 中文提示
+$text_cn
+
+Please type 'confirm' to proceed with the commit.
+EOF
+    )
+
+    user_input=$(show_prompt_dialog "$PROMPT_MESSAGE")
+
+    if [ "$user_input" != "confirm" ]; then
+      echo "🔴 Commit blocked. You must type 'confirm' to proceed."
+      exit 1
     fi
-    if [[ -n "$text_cn" ]]; then
-      if [[ -n "$PROMPT_MESSAGE" ]]; then
-        PROMPT_MESSAGE+="\n\n"
-      fi
-      PROMPT_MESSAGE+="· 中文提示\n$text_cn"
-    fi
-    PROMPT_MESSAGE+="\n\nPlease type 'confirm' to proceed with the commit."
-
-    OS=$(uname -s)
-    user_input=""
-
-    if [[ "$OS" == "Windows_NT" || "$OS" =~ MINGW.* || "$OS" =~ MSYS.* ]]; then
-      echo "🟡 Detected Windows: $OS"
-      user_input=$(powershell.exe -Command "& {
-        Add-Type -AssemblyName Microsoft.VisualBasic;
-        $result = [Microsoft.VisualBasic.Interaction]::InputBox('$PROMPT_MESSAGE', 'Git Pre-Commit Hook', '');
-        Write-Output $result
-      }")
-
-      echo "🟡 User input: $user_input"
-
-      if [ -z "$user_input" ]; then
-        echo "🔴 No input provided. Blocking commit."
-        exit 1
-      fi
-    elif [[ "$OS" == "Darwin" ]]; then
-      user_input=$(osascript -e "tell app \"System Events\" to display dialog \"$PROMPT_MESSAGE\" default answer \"\"" -e "text returned of result")
-    else
-      echo "$PROMPT_MESSAGE"
-      read -p "> " user_input
-    fi
-
-    echo "✅ You typed: $user_input. Proceeding with commit."
 
     new_count=$((current_count + 1))
-    tmp_file=$(mktemp)
-    jq --arg section "$section" --argjson count "$new_count" '.[$section] = $count' "$CACHE_FILE" > "$tmp_file" && mv "$tmp_file" "$CACHE_FILE"
+    if grep -q "^\[$section\]=" "$CACHE_FILE"; then
+      sed -i "s/^\[$section\]=.*/\[$section\]=$new_count/" "$CACHE_FILE"
+    else
+      echo "[$section]=$new_count" >> "$CACHE_FILE"
+    fi
+
+    echo "✅ Commit confirmed and recorded."
   fi
 done
 
