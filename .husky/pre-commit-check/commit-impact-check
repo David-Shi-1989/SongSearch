@@ -1,0 +1,84 @@
+#!/bin/sh
+
+if [[ $SKIP_HUSKY == "true" ]]; then
+  echo "Husky skipped during build process"
+  exit 0
+fi
+
+# Define the configuration file path
+CONFIG_FILE="$(git rev-parse --show-toplevel)/.husky/pre-commit-check/config.ini"
+
+# Ensure the configuration file exists
+if [ ! -f "$CONFIG_FILE" ]; then
+  echo "❌ ERROR: Configuration file not found!"
+  exit 1
+fi
+
+# Extract all rule names from the INI file
+RULES=$(grep '^\[' "$CONFIG_FILE" | tr -d '[]')
+
+# Get the list of modified files in the commit
+CHANGED_FILES=$(git diff --cached --name-only)
+
+# Exit early if no files were modified
+if [ -z "$CHANGED_FILES" ]; then
+  exit 0
+fi
+
+# Initialize an empty prompt message
+PROMPT_MESSAGE=""
+
+# Iterate through all rules
+for RULE in $RULES; do
+  # Extract title, files, folders, and check-list
+  TITLE=$(awk -F '=' "/^\[$RULE\]/ {found=1} found && /^title=/ {print \$2; exit}" "$CONFIG_FILE")
+  FILES=$(awk -F '=' "/^\[$RULE\]/ {found=1} found && /^files=/ {print \$2; exit}" "$CONFIG_FILE" | tr ',' '\n')
+  FOLDERS=$(awk -F '=' "/^\[$RULE\]/ {found=1} found && /^folders=/ {print \$2; exit}" "$CONFIG_FILE" | tr ',' '\n')
+
+  # **Fix: Read `check-list` as a single block without modification**
+  CHECK_LIST=$(awk -F '=' "/^\[$RULE\]/ {found=1} found && /^check-list=/ {sub(/^check-list=/, \"\"); print; while (getline && /^\s/) print}" "$CONFIG_FILE")
+
+  # Format check-list for display
+  CHECK_LIST_PROMPT=""
+  if [ -n "$CHECK_LIST" ]; then
+    CHECK_LIST_PROMPT="\n\n$CHECK_LIST"
+  fi
+
+  # Check if any modified file matches the rule
+  for FILE in $FILES; do
+    if echo "$CHANGED_FILES" | grep -Fxq "$FILE"; then
+      PROMPT_MESSAGE="$TITLE$CHECK_LIST_PROMPT\n\nType 'confirm' to proceed."
+      break 2
+    fi
+  done
+
+  # Check if any modified file is within the monitored folders
+  for FOLDER in $FOLDERS; do
+    if echo "$CHANGED_FILES" | grep -q "^$FOLDER/"; then
+      PROMPT_MESSAGE="$TITLE$CHECK_LIST_PROMPT\n\nType 'confirm' to proceed."
+      break 2
+    fi
+  done
+done
+
+# If a match was found, prompt the user for confirmation
+if [[ -n "$PROMPT_MESSAGE" ]]; then
+  OS=$(uname -s)
+
+  if [[ "$OS" =~ MINGW.* || "$OS" =~ MSYS.* ]]; then
+    user_input=$(powershell.exe -Command "& {Add-Type -AssemblyName Microsoft.VisualBasic; $result=[Microsoft.VisualBasic.Interaction]::InputBox('$PROMPT_MESSAGE', 'Git Pre-Commit Hook', ''); Write-Output $result}")
+  elif [[ "$OS" == "Darwin" ]]; then
+    user_input=$(osascript -e "tell app \"System Events\" to display dialog \"$PROMPT_MESSAGE\" default answer \"\"" -e "text returned of result")
+  else
+    read -p "$PROMPT_MESSAGE: " user_input
+  fi
+
+  if [[ "$user_input" != "confirm" ]]; then
+    echo "❌ Commit aborted. You must type 'confirm' to proceed."
+    exit 1
+  fi
+fi
+
+# Print success message
+echo "✅ Commit successfully passed all checks!"
+exit 0

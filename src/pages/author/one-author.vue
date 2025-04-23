@@ -11,6 +11,7 @@
     <div class="author-song-wrap">
       <div style="margin: 10px 0 0 0; display: flex;">
         <el-button type="danger" size="mini" :disabled="!hasSelections">删除</el-button>
+        <el-button type="primary" size="mini" :disabled="!hasSelections" @click="onAddSongToAblum">添加</el-button>
         <el-input v-model="keyword" size="mini" placeholder="请输入搜索内容" style="margin-left: 20px;width: 250px;"
           @change="onKeywordChange"></el-input>
       </div>
@@ -89,6 +90,10 @@ export default {
     },
     handleSelectionChange(val) {
       this.multipleSelection = val;
+    },
+    // event handler
+    onAddSongToAblum() {
+      console.log('add', this.multipleSelection)
     }
   },
   computed: {

@@ -5,7 +5,7 @@
         <my-header />
       </el-header>
       <el-container>
-        <el-aside width="200px">Aside</el-aside>
+        <el-aside width="200px"><my-sidebar /></el-aside>
         <el-main>
           <router-view />
         </el-main>
@@ -21,12 +21,14 @@
 <script>
 import MyHeader from '@/components/header/Header.vue'
 import MyFooter from '@/components/footer'
+import MySidebar from '@/components/sidebar'
 import { mapActions } from 'vuex';
 export default {
   name: 'App',
   components: {
     MyHeader,
-    MyFooter
+    MyFooter,
+    MySidebar
   },
   methods: {
     ...mapActions(['init'])

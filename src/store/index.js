@@ -18,11 +18,20 @@ const store = new Vuex.Store({
   state: {
     userList: [],
     currentUser: UserCache.get(),
-    songMenus: []
+    songMenus: [],
+    ablumn: {
+      selectedId: '',
+      list: [
+        { name: '内地歌曲', id: 'a01', createTime: 1742529605280, list: [], createdBy: '001' },
+        { name: '英文歌曲', id: 'a02', createTime: 1742529605280, list: [], createdBy: '001' }
+      ]
+    }
   },
   getters: {
     userList: (state) => state.userList,
-    audioList: () => []
+    audioList: () => [],
+    ablumnList: (state) => state.ablumn.list,
+    selectedAblumId: (state) => state.ablumn.selectedId
   },
   mutations: {
     setCurrentUser (state, userId) {
@@ -31,6 +40,9 @@ const store = new Vuex.Store({
     },
     setUserList (state, list) {
       state.userList = list
+    },
+    setSelectedAblum (state, id) {
+      state.ablumn.selectedId = id
     }
   },
   actions: {

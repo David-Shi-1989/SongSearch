@@ -1,0 +1,80 @@
+#!/bin/bash
+
+set -e
+
+NOTIFICATION_CONFIG=".husky/pre-commit-notification/config.ini"
+CACHE_FILE=".husky/pre-commit-notification/pre-commit-notification-counts.json"
+CURRENT_DATE=$(date +%Y-%m-%d)
+
+# Reset support
+if [[ "$1" == "--reset" ]]; then
+  echo '{}' > "$CACHE_FILE"
+  echo "✅ Notification cache reset."
+  exit 0
+fi
+
+if [ ! -f "$CACHE_FILE" ]; then
+  echo '{}' > "$CACHE_FILE"
+fi
+
+SECTION_NAMES=$(grep "^\[" "$NOTIFICATION_CONFIG" | sed 's/\[//;s/\]//')
+
+for section in $SECTION_NAMES; do
+  content=$(sed -n "/^\[$section\]/,/^\[/p" "$NOTIFICATION_CONFIG" | grep -v "^\[" || true)
+
+  start_date=$(echo "$content" | grep -E "^start=" | cut -d'=' -f2- | xargs)
+  end_date=$(echo "$content" | grep -E "^end=" | cut -d'=' -f2- | xargs)
+  text_cn=$(echo "$content" | grep -E "^text_cn=" | cut -d'=' -f2- | xargs)
+  text_en=$(echo "$content" | grep -E "^text_en=" | cut -d'=' -f2- | xargs)
+  max_count=$(echo "$content" | grep -E "^max=|^max_count=" | cut -d'=' -f2 | xargs)
+
+  if [[ -z "$start_date" || -z "$end_date" ]]; then
+    continue
+  fi
+
+  start_ts=$(date -j -f "%Y-%m-%d" "$start_date" "+%s") || continue
+  end_ts=$(date -j -f "%Y-%m-%d" "$end_date" "+%s") || continue
+  now_ts=$(date "+%s")
+
+  if [[ "$now_ts" -ge "$start_ts" && "$now_ts" -le "$end_ts" ]]; then
+    current_count=$(jq -r --arg section "$section" '.[$section] // 0' "$CACHE_FILE")
+
+    if [[ -n "$max_count" && "$current_count" -ge "$max_count" ]]; then
+      continue
+    fi
+
+    # Format full message: English first, then Chinese
+    PROMPT_MESSAGE=""
+    if [[ -n "$text_en" ]]; then
+      PROMPT_MESSAGE="· English Notice\n$text_en"
+    fi
+    if [[ -n "$text_cn" ]]; then
+      if [[ -n "$PROMPT_MESSAGE" ]]; then
+        PROMPT_MESSAGE+="\n\n"
+      fi
+      PROMPT_MESSAGE+="· 中文提示\n$text_cn"
+    fi
+    PROMPT_MESSAGE+="\n\nPlease type 'confirm' to proceed with the commit."
+
+    OS=$(uname -s)
+    user_input=""
+
+    if [[ "$OS" =~ MINGW.* || "$OS" =~ MSYS.* ]]; then
+      user_input=$(powershell.exe -Command "& {Add-Type -AssemblyName Microsoft.VisualBasic; $result=[Microsoft.VisualBasic.Interaction]::InputBox(\"$PROMPT_MESSAGE\", 'Git Pre-Commit Hook', ''); Write-Output $result}")
+    elif [[ "$OS" == "Darwin" ]]; then
+      user_input=$(osascript -e "tell app \"System Events\" to display dialog \"$PROMPT_MESSAGE\" default answer \"\"" -e "text returned of result")
+    else
+      echo "$PROMPT_MESSAGE"
+      read -p "> " user_input
+    fi
+
+    echo "✅ You typed: $user_input. Proceeding with commit."
+
+    new_count=$((current_count + 1))
+    tmp_file=$(mktemp)
+    jq --arg section "$section" --argjson count "$new_count" '.[$section] = $count' "$CACHE_FILE" > "$tmp_file" && mv "$tmp_file" "$CACHE_FILE"
+  fi
+
+done
+
+exit 0

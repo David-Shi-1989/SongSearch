@@ -9,7 +9,7 @@ const path = require('path');
 
 puppeteer.use(StealthPlugin());
 
-const authorNames = ['林俊杰'];
+const authorNames = ['张国荣', '谢霆锋', '张韶涵'];
 
 const support_formats = {
   MP3: 'mp3',
@@ -212,6 +212,7 @@ function start(names) {
   (names || authorNames).forEach(async author => await getOneAuthor(author));
 }
 
+start();
 module.exports = {
   DOWNLOAD_PATH,
   sanitizeFilename
