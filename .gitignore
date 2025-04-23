@@ -1,3 +1,5 @@
 node_modules/
 .vscode
 server/walker/data/*
+.husky\pre-commit-notification\notification-counts.txt
+.husky/pre-commit-notification/notification-counts.txt
