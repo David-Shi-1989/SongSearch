@@ -1,4 +1,6 @@
 node_modules/
+server/config/hifiti-account.json
+server/walker/.hifiti-chrome-profile/
 .vscode
 server/walker/data/*
 .husky\pre-commit-notification\notification-counts.txt

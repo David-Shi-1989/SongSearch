@@ -4,6 +4,15 @@
   // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
+    {
+      "name": "husky test",
+      "program": "${workspaceFolder}/utils.js",
+      "request": "launch",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "node"
+    },
   {
     "name": "Launch Express",
     "program": "${workspaceFolder}/server/index.js",
@@ -52,7 +61,7 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Nodemon",
+      "name": "index.js",
       "runtimeExecutable": "nodemon",
       "program": "${workspaceFolder}/server/index.js",
       "restart": true,

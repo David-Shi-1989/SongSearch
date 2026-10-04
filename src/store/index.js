@@ -19,6 +19,7 @@ const store = new Vuex.Store({
     userList: [],
     currentUser: UserCache.get(),
     songMenus: [],
+    currentMusic: null,
     ablumn: {
       selectedId: '',
       list: [
@@ -43,6 +44,9 @@ const store = new Vuex.Store({
     },
     setSelectedAblum (state, id) {
       state.ablumn.selectedId = id
+    },
+    setCurrentMusic (state, music) {
+      state.currentMusic = music
     }
   },
   actions: {

@@ -5,6 +5,9 @@
         <router-link :to="{name: 'Home'}">主页</router-link>
       </li>
       <li>
+        <router-link :to="{name: 'Search'}">搜索</router-link>
+      </li>
+      <li>
         <router-link :to="{name: 'Author'}">歌手</router-link>
       </li>
       <li>

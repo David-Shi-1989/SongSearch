@@ -4,7 +4,7 @@ const path = require('path');
 
 const START_PAGE = 3501;
 
-const targetPage = `https://www.hifini.com/forum-1-${START_PAGE}.htm?orderby=tid`;
+const targetPage = `https://hifiti.com//forum-1-${START_PAGE}.htm?orderby=tid`;
 
 let result = [];
 

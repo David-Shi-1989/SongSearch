@@ -1,1 +1,2 @@
 # pre-commit notification counter
+[branch_deprecation]=4
